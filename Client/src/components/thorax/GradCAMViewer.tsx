@@ -1,0 +1,15 @@
+import { useEffect, useState } from 'react';
+import { Expand, LoaderCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { predictions, type Disease } from '@/lib/mockData';
+import { mockAnalysisService } from '@/lib/services/mockAnalysis';
+import { SectionHeading } from './Common';
+export function GradCAMViewer({ image }: { image: string }) {
+  const [disease, setDisease] = useState<Disease>('Atelectasis');
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState<'original' | 'heatmap' | null>(null);
+  useEffect(() => { let active = true; setLoading(true); mockAnalysisService.gradcam(disease).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [disease]);
+  const visual = (heatmap: boolean) => <div className={`radiograph ${heatmap ? `heatmap heatmap-${disease.toLowerCase()}` : ''}`}><img src={image} alt={heatmap ? `Illustrative attention overlay for ${disease}` : 'Original chest X-ray'} />{heatmap && <div className="heat-overlay" />}<span className="radiograph-label">{heatmap ? 'ILLUSTRATIVE ATTENTION MAP' : 'FRONTAL CHEST RADIOGRAPH'}</span>{heatmap && loading && <div className="image-loading" role="status"><LoaderCircle className="animate-spin" />Loading Grad-CAM…</div>}</div>;
+  return <section><SectionHeading title="Visual Explanation" description="See where the model focused its attention."><label className="disease-selector">Explain prediction for:<select value={disease} onChange={(event) => setDisease(event.target.value as Disease)}>{predictions.map(({ disease: label }) => <option key={label}>{label}</option>)}</select></label></SectionHeading><div className="visual-grid">{[false, true].map((heatmap) => <div className="visual-panel" key={String(heatmap)}><div className="visual-title"><h3>{heatmap ? 'Grad-CAM Visualization' : 'Original X-Ray'}</h3><Button variant="ghost" size="icon" aria-label={`Expand ${heatmap ? 'Grad-CAM' : 'original X-ray'}`} onClick={() => setExpanded(heatmap ? 'heatmap' : 'original')}><Expand size={16} /></Button></div>{visual(heatmap)}{heatmap && <div className="heatmap-legend"><span>Low attention</span><span className="legend-spectrum" /><span>High attention</span></div>}</div>)}</div><p className="explanation-caption">Highlighted regions represent areas that contributed strongly to the model prediction.</p><p className="medical-caution">Grad-CAM visualizations represent model attention and should not be interpreted as definitive anatomical localization. This overlay is illustrative, not a computed Grad-CAM.</p><Dialog open={expanded !== null} onOpenChange={(open) => { if (!open) setExpanded(null); }}><DialogContent className="image-dialog"><DialogHeader><DialogTitle>{expanded === 'heatmap' ? `${disease} — illustrative attention map` : 'Original X-Ray'}</DialogTitle><DialogDescription>Research demonstration only. Not diagnostic evidence.</DialogDescription></DialogHeader>{visual(expanded === 'heatmap')}</DialogContent></Dialog></section>;
+}

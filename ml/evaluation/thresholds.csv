@@ -1,0 +1,6 @@
+Disease,Threshold
+Atelectasis,0.66552734375
+Effusion,0.67431640625
+Infiltration,0.552734375
+Mass,0.787109375
+Nodule,0.85546875

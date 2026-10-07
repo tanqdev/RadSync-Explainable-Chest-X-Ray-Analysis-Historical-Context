@@ -1,0 +1,21 @@
+Image Index,Target Disease,Ground Truth
+00000060_000.png,Atelectasis,Atelectasis
+00000150_003.png,Atelectasis,Atelectasis
+00000236_000.png,Atelectasis,Atelectasis
+00000238_000.png,Atelectasis,Atelectasis
+00000084_000.png,Effusion,Effusion
+00000084_001.png,Effusion,Effusion
+00000150_000.png,Effusion,Effusion
+00000180_000.png,Effusion,Effusion
+00000063_000.png,Infiltration,Infiltration
+00000105_002.png,Infiltration,Infiltration
+00000134_000.png,Infiltration,Infiltration
+00000221_000.png,Infiltration,Infiltration
+00000246_016.png,Mass,Mass
+00000693_004.png,Mass,Mass
+00000711_000.png,Mass,Mass
+00000711_005.png,Mass,Mass
+00000008_002.png,Nodule,Nodule
+00000105_004.png,Nodule,Nodule
+00000105_005.png,Nodule,Nodule
+00000157_000.png,Nodule,Nodule
