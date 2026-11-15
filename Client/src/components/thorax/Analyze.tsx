@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { UploadCloud, ScanLine, FileImage, X, ArrowRight, Check, LoaderCircle, ShieldCheck, ImagePlus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockAnalysisService } from '@/lib/services/mockAnalysis';
+import { analysisService } from '@/lib/services/analysis';
 import { analysisSteps } from '@/lib/mockData';
 import xray from '@/assets/chest-xray.jpg';
 import { useAnalyses } from './AnalysisContext';
@@ -36,7 +36,7 @@ export function Analyze() {
     if (!file || analyzing) return;
     setAnalyzing(true); setStep(0); setError('');
     try {
-      const result = await mockAnalysisService.predict(file.file, file.url);
+      const result = await analysisService.predict(file.file, file.url);
       if (!mounted.current) return;
       addCase(result);
       await navigate({ to: '/results/$caseId', params: { caseId: result.id } });
