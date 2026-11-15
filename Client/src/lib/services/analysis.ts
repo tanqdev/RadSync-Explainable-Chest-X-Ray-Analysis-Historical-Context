@@ -103,7 +103,7 @@ export const analysisService = {
     return payload;
   },
 
-  async summarize(predictions: PredictionScore[], cases: HistoricalCaseResult[]): Promise<SummaryResponse> {
+  async summarize(predictions: readonly PredictionScore[], cases: HistoricalCaseResult[]): Promise<SummaryResponse> {
     const payload = {
       predictions: Object.fromEntries(predictions.map((item) => [item.disease, item.probability])),
       cases: cases.map((item) => ({
