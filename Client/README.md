@@ -1,29 +1,33 @@
-# Welcome to your Lovable project
+# RadSyn Client
 
-This project was built with [Lovable](https://lovable.dev).
+## Run locally
 
-## Build with Lovable
+1. Install dependencies:
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+   ```powershell
+   npm install
+   ```
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+2. Copy `.env.example` to `.env.local`:
 
-## Development
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+3. Start the frontend:
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+   ```powershell
+   npm run dev
+   ```
+
+Set `VITE_API_BASE_URL` in `.env.local` to the FastAPI backend URL. The client uses `POST /predict` for classification and `POST /gradcam` for computed Grad-CAM overlays.
+
+Historical case retrieval and LLM summaries are not connected yet; the UI displays these components as unavailable until the MIMIC-CXR index and summary service are configured.
+
+## Checks
+
+```powershell
+npm run lint
+npm run build
+npm test
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
