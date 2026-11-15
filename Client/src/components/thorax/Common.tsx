@@ -5,7 +5,7 @@ export function DemoBadge() { return <span className="demo-badge"><FlaskConical 
 export function StatusBadge({ review = false }: { review?: boolean }) { return <span className={`status-badge ${review ? 'review' : ''}`}><span className="status-dot" />{review ? 'Review suggested' : 'Completed'}</span>; }
 export function Disclaimer({ compact = false }: { compact?: boolean }) { return <div className={`disclaimer ${compact ? 'compact' : ''}`}><ShieldCheck size={18} /><div><strong>For research. Not for diagnosis.</strong><p>{disclaimer}</p></div></div>; }
 export function SectionHeading({ title, description, children }: { title: string; description?: string; children?: React.ReactNode }) { return <div className="section-heading"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{children}</div>; }
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env['VITE_API_BASE_URL'] || 'http://127.0.0.1:8000').replace(/\/$/, '');
 export function ReadyStatus() {
   const [status, setStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   useEffect(() => {
