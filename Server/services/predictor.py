@@ -12,6 +12,13 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 CLASSES = ["Atelectasis", "Effusion", "Infiltration", "Mass", "Nodule"]
+THRESHOLDS = {
+    "Atelectasis": 0.6655,
+    "Effusion": 0.6743,
+    "Infiltration": 0.5527,
+    "Mass": 0.7871,
+    "Nodule": 0.8555,
+}
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "densenet121_best.pth")
@@ -57,26 +64,25 @@ def predict_image(image: Image.Image):
     return {disease: round(float(probability), 4) for disease, probability in zip(CLASSES, probabilities)}
 
 
-def explain_image(image: Image.Image, disease: str):
+def gradcam_map(image: Image.Image, disease: str):
     if disease not in CLASSES:
         raise ValueError(f"Unsupported disease. Choose one of: {', '.join(CLASSES)}")
-
     _, tensor, rgb_array = prepare_image(image)
     target_index = CLASSES.index(disease)
     target_layers = [model.features.denseblock4]
-
     # Grad-CAM requires gradients, so do not wrap this block in inference_mode/no_grad.
     with GradCAM(model=model, target_layers=target_layers) as cam:
         grayscale_cam = cam(
             input_tensor=tensor,
             targets=[ClassifierOutputTarget(target_index)],
         )[0]
+    return grayscale_cam, rgb_array
 
+
+def explain_image(image: Image.Image, disease: str):
+    grayscale_cam, rgb_array = gradcam_map(image, disease)
     overlay = show_cam_on_image(rgb_array, grayscale_cam, use_rgb=True)
     output = BytesIO()
     Image.fromarray(overlay).save(output, format="PNG")
     encoded = base64.b64encode(output.getvalue()).decode("ascii")
-    return {
-        "disease": disease,
-        "heatmap": f"data:image/png;base64,{encoded}",
-    }
+    return {"disease": disease, "heatmap": f"data:image/png;base64,{encoded}"}
