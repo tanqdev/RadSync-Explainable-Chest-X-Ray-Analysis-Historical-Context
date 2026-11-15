@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Expand, LoaderCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { predictions, type Disease } from '@/lib/mockData';
+import { diseaseConfig, type Disease } from '@/lib/mockData';
 import { analysisService } from '@/lib/services/analysis';
 import { SectionHeading } from './Common';
 
@@ -30,7 +30,7 @@ export function GradCAMViewer({ image }: { image: string }) {
 
   return <section>
     <SectionHeading title="Visual Explanation" description="Computed Grad-CAM heatmap for the selected disease.">
-      <label className="disease-selector">Explain prediction for:<select value={disease} onChange={(event) => setDisease(event.target.value as Disease)}>{predictions.map(({ disease: label }) => <option key={label}>{label}</option>)}</select></label>
+      <label className="disease-selector">Explain prediction for:<select value={disease} onChange={(event) => setDisease(event.target.value as Disease)}>{diseaseConfig.map(({ disease: label }) => <option key={label}>{label}</option>)}</select></label>
     </SectionHeading>
     <div className="visual-grid">
       <div className="visual-panel"><div className="visual-title"><h3>Original X-Ray</h3><Button variant="ghost" size="icon" aria-label="Expand original X-ray" onClick={() => setExpanded('original')}><Expand size={16} /></Button></div>{originalVisual}</div>
