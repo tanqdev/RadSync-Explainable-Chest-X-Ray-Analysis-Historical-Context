@@ -1,122 +1,82 @@
+import base64
 import os
+from io import BytesIO
 
+import numpy as np
 import torch
 import torch.nn as nn
-from torchvision import models, transforms
 from PIL import Image
+from torchvision import models, transforms
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
 
-
-# The five diseases our model was trained to predict
-CLASSES = [
-    "Atelectasis",
-    "Effusion",
-    "Infiltration",
-    "Mass",
-    "Nodule",
-]
-
-
-# Select GPU if available, otherwise CPU
+CLASSES = ["Atelectasis", "Effusion", "Infiltration", "Mass", "Nodule"]
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "densenet121_best.pth")
 
-
-# Project root:
-# Server/services/predictor.py
-#       ↑
-# parents[0] = services
-# parents[1] = Server
-# parents[2] = Chest-XRay-Project
-PROJECT_ROOT = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-)
-
-MODEL_PATH = os.path.join(
-    PROJECT_ROOT,
-    "models",
-    "densenet121_best.pth",
-)
-
-
-# Same preprocessing used during validation/testing
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-    ),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 
 def load_model():
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model checkpoint not found: {MODEL_PATH}")
     print(f"Loading model from: {MODEL_PATH}")
     print(f"Using device: {DEVICE}")
-
-    # Create the same DenseNet121 architecture
-    model = models.densenet121(weights=None)
-
-    # Replace the original classifier with our 5-class classifier
-    model.classifier = nn.Linear(
-        model.classifier.in_features,
-        len(CLASSES),
-    )
-
-    # Load our trained checkpoint
-    checkpoint = torch.load(
-        MODEL_PATH,
-        map_location=DEVICE,
-        weights_only=False,
-    )
-
-    model.load_state_dict(checkpoint["model_state_dict"])
-
-    model.to(DEVICE)
-    model.eval()
-
-    print("Model loaded successfully.")
-
-    return model
+    network = models.densenet121(weights=None)
+    network.classifier = nn.Linear(network.classifier.in_features, len(CLASSES))
+    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+    network.load_state_dict(state_dict)
+    network.to(DEVICE)
+    network.eval()
+    print("DenseNet121 loaded successfully.")
+    return network
 
 
-# Load model ONCE when this module is imported
 model = load_model()
 
 
+def prepare_image(image: Image.Image):
+    rgb = image.convert("RGB").resize((224, 224))
+    tensor = transform(rgb).unsqueeze(0).to(DEVICE)
+    rgb_array = np.asarray(rgb, dtype=np.float32) / 255.0
+    return rgb, tensor, rgb_array
+
+
 def predict_image(image: Image.Image):
-    """
-    Run inference on a chest X-ray image.
-
-    Returns:
-        Dictionary containing probability for each disease.
-    """
-
-    # Convert image to RGB
-    image = image.convert("RGB")
-
-    # Apply preprocessing
-    tensor = transform(image)
-
-    # Add batch dimension:
-    # [3, 224, 224] -> [1, 3, 224, 224]
-    tensor = tensor.unsqueeze(0)
-
-    # Move image to same device as model
-    tensor = tensor.to(DEVICE)
-
-    # No gradients needed during inference
-    with torch.no_grad():
+    _, tensor, _ = prepare_image(image)
+    with torch.inference_mode():
         logits = model(tensor)
+        probabilities = torch.sigmoid(logits)[0].cpu().tolist()
+    return {disease: round(float(probability), 4) for disease, probability in zip(CLASSES, probabilities)}
 
-        # Convert logits to probabilities
-        probabilities = torch.sigmoid(logits)
 
-    probabilities = probabilities[0].cpu().tolist()
+def explain_image(image: Image.Image, disease: str):
+    if disease not in CLASSES:
+        raise ValueError(f"Unsupported disease. Choose one of: {', '.join(CLASSES)}")
 
-    results = {}
+    _, tensor, rgb_array = prepare_image(image)
+    target_index = CLASSES.index(disease)
+    target_layers = [model.features.denseblock4]
 
-    for disease, probability in zip(CLASSES, probabilities):
-        results[disease] = round(probability, 4)
+    # Grad-CAM requires gradients, so do not wrap this block in inference_mode/no_grad.
+    with GradCAM(model=model, target_layers=target_layers) as cam:
+        grayscale_cam = cam(
+            input_tensor=tensor,
+            targets=[ClassifierOutputTarget(target_index)],
+        )[0]
 
-    return results
+    overlay = show_cam_on_image(rgb_array, grayscale_cam, use_rgb=True)
+    output = BytesIO()
+    Image.fromarray(overlay).save(output, format="PNG")
+    encoded = base64.b64encode(output.getvalue()).decode("ascii")
+    return {
+        "disease": disease,
+        "heatmap": f"data:image/png;base64,{encoded}",
+    }
