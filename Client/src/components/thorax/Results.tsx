@@ -25,7 +25,7 @@ export function Results({ caseId }: { caseId: string }) {
     <div className="result-summary"><span className="result-summary-icon"><Info size={26} /></span><div><span className="eyebrow">DENSENET121 OUTPUT</span><h2>{scoreCount ? 'Five disease scores returned' : 'Prediction data unavailable'}</h2><p>Scores are sigmoid probabilities returned by the trained model. They are not calibrated clinical confidence values and do not constitute a diagnosis.</p></div><span className="ready-status"><CheckCircle2 size={14} />Live model output</span></div>
     <div className="results-sections"><PredictionOverview results={analysis.predictions ?? []} />
       <GradCAMViewer image={analysis.image || xray} />
-      <HistoricalCases />
+      <HistoricalCases image={analysis.image || xray} predictions={analysis.predictions ?? []} />
       <section className="ai-summary"><span className="ai-summary-icon"><Info size={22} /></span><div><div className="summary-heading"><h2>Historical Context</h2><span>Pending integration</span></div><p>The historical case retrieval and LLM summarization services are not connected yet. No historical cases were retrieved for this prediction.</p><small>Planned component · No AI-generated summary was produced</small></div></section>
       <Disclaimer />
     </div></>;
