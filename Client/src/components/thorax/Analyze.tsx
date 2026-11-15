@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { UploadCloud, ScanLine, FileImage, X, ArrowRight, Check, LoaderCircle, ShieldCheck, ImagePlus, AlertCircle } from 'lucide-react';
+import { UploadCloud, ScanLine, FileImage, X, ArrowRight, LoaderCircle, ShieldCheck, ImagePlus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { analysisService } from '@/lib/services/analysis';
 import xray from '@/assets/chest-xray.jpg';
