@@ -1,3 +1,4 @@
+import json
 import os
 from io import BytesIO
 from typing import Any
@@ -150,7 +151,7 @@ def summarize(payload: SummaryRequest = Body(...)):
         response = client.responses.create(
             model=model_name,
             instructions=instructions,
-            input=str(prompt_data),
+            input=json.dumps(prompt_data, ensure_ascii=False),
             max_output_tokens=450,
         )
         return {"summary": response.output_text, "model": model_name, "case_ids": [case.id for case in payload.cases]}
