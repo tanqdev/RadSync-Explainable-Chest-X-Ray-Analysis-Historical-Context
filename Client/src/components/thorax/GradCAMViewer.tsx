@@ -3,7 +3,7 @@ import { Expand, LoaderCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { predictions, type Disease } from '@/lib/mockData';
-import { mockAnalysisService } from '@/lib/services/mockAnalysis';
+import { analysisService } from '@/lib/services/analysis';
 import { SectionHeading } from './Common';
 
 export function GradCAMViewer({ image }: { image: string }) {
@@ -18,7 +18,7 @@ export function GradCAMViewer({ image }: { image: string }) {
     setLoading(true);
     setError('');
     setHeatmap(null);
-    mockAnalysisService.gradcam(null, image, disease)
+    analysisService.gradcam(null, image, disease)
       .then((result) => { if (active) setHeatmap(result.heatmap); })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : 'Grad-CAM could not be generated.'); })
       .finally(() => { if (active) setLoading(false); });
