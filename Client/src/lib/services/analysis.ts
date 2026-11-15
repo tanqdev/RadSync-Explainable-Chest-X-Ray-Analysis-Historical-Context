@@ -54,8 +54,8 @@ export const analysisService = {
       id: `RS-${Date.now().toString(36).toUpperCase()}`,
       date: new Date().toISOString(),
       finding: detected.length ? detected.map((item) => item.disease).join(', ') : 'No scores above validation thresholds',
-      confidence: topPrediction?.probability ?? 0,
-      status: 'Completed',
+      highestScore: topPrediction?.probability ?? 0,
+      status: detected.length > 0 ? 'Completed' : 'Review suggested',
       image: imageUrl,
       predictions: orderedScores,
     };
