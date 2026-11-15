@@ -26,5 +26,5 @@ export const analyses: AnalysisCase[] = [];
 export interface HistoricalCase { id: string; similarity: number; finding: string; report: string; observations: string[]; date: string }
 export const historicalCases: HistoricalCase[] = [];
 export const summary = '';
-export const analysisSteps = ['Image preprocessing', 'Disease classification', 'Explainability generation', 'Historical case retrieval'];
+export const analysisSteps = ['Uploading image', 'Preprocessing image', 'Running DenseNet121 inference', 'Preparing prediction results'];
 export function formatDate(date: string) { return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
