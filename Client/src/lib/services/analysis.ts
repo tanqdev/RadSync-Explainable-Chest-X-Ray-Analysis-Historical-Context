@@ -1,13 +1,35 @@
-import { historicalCases, diseaseConfig, type AnalysisCase, type Disease, type PredictionScore } from '@/lib/mockData';
+import { diseaseConfig, type AnalysisCase, type Disease, type PredictionScore } from '@/lib/mockData';
 
 const API_BASE_URL = (import.meta.env['VITE_API_BASE_URL'] || 'http://127.0.0.1:8000').replace(/\/$/, '');
+
+export interface HistoricalCaseResult {
+  id: string;
+  similarity: number;
+  finding: string;
+  report: string;
+  date: string;
+  image?: string | null;
+}
+export interface RetrievalResponse {
+  triggered: boolean;
+  reason: string;
+  retrieval_class?: Disease;
+  threshold_margin?: number;
+  cases: HistoricalCaseResult[];
+}
+export interface SummaryResponse {
+  summary: string;
+  model: string;
+  case_ids: string[];
+}
 
 async function toUploadFile(file: File | null, imageUrl: string): Promise<File> {
   if (file) return file;
   const response = await fetch(imageUrl);
-  if (!response.ok) throw new Error('Could not load the sample X-ray image.');
+  if (!response.ok) throw new Error('Could not load the selected X-ray image.');
   const blob = await response.blob();
-  return new File([blob], 'sample-chest-xray.jpg', { type: blob.type || 'image/jpeg' });
+  const filename = blob.type === 'image/png' ? 'chest-xray.png' : 'chest-xray.jpg';
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
 }
 
 async function postImage(endpoint: string, file: File, extra?: Record<string, string>) {
@@ -18,7 +40,7 @@ async function postImage(endpoint: string, file: File, extra?: Record<string, st
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', body: formData });
   } catch {
-    throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}. Start the FastAPI server and check VITE_API_BASE_URL.`);
+    throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}. Start FastAPI and check VITE_API_BASE_URL.`);
   }
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
@@ -72,6 +94,41 @@ export const analysisService = {
     return payload;
   },
 
-  // Historical retrieval remains empty until the authorized MIMIC-CXR index is configured.
-  async retrieveCases() { return historicalCases; },
+  async retrieveCases(file: File | null, imageUrl: string, topK = 5): Promise<RetrievalResponse> {
+    const upload = await toUploadFile(file, imageUrl);
+    const payload = await postImage('/retrieve', upload, { top_k: String(topK) }) as RetrievalResponse;
+    if (typeof payload?.triggered !== 'boolean' || !Array.isArray(payload.cases)) {
+      throw new Error('The historical retrieval endpoint returned an invalid response.');
+    }
+    return payload;
+  },
+
+  async summarize(predictions: PredictionScore[], cases: HistoricalCaseResult[]): Promise<SummaryResponse> {
+    const payload = {
+      predictions: Object.fromEntries(predictions.map((item) => [item.disease, item.probability])),
+      cases: cases.map((item) => ({
+        id: item.id,
+        similarity: item.similarity,
+        finding: item.finding,
+        report: item.report,
+      })),
+    };
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/summarize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}.`);
+    }
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      const detail = body && typeof body.detail === 'string' ? body.detail : `Summary request failed (${response.status}).`;
+      throw new Error(detail);
+    }
+    if (typeof body?.summary !== 'string') throw new Error('The summary endpoint returned an invalid response.');
+    return body as SummaryResponse;
+  },
 };
