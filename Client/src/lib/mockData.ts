@@ -7,7 +7,20 @@ export const predictions = [
   { disease: 'Nodule', probability: 33, description: 'A small focal pulmonary opacity.' },
 ] as const;
 export type Disease = typeof predictions[number]['disease'];
-export interface AnalysisCase { id: string; date: string; finding: string; confidence: number; status: 'Completed' | 'Review suggested'; image?: string }
+export interface PredictionScore {
+  disease: Disease;
+  probability: number;
+  description?: string;
+}
+export interface AnalysisCase {
+  id: string;
+  date: string;
+  finding: string;
+  confidence: number;
+  status: 'Completed' | 'Review suggested';
+  image?: string;
+  predictions?: PredictionScore[];
+}
 export const analyses: AnalysisCase[] = [
   { id: 'TX-2026-0048', date: '2026-10-06T14:32:00', finding: 'Atelectasis', confidence: 82, status: 'Completed' },
   { id: 'TX-2026-0047', date: '2026-10-06T11:18:00', finding: 'Infiltration', confidence: 74, status: 'Completed' },
