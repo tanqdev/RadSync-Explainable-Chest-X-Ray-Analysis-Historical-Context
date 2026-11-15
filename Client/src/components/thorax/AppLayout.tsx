@@ -1,6 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
-import { Activity, ArrowUpRight, ChevronLeft, ChevronRight, FlaskConical, History, LayoutDashboard, Menu, ScanLine, X, Info, CircleHelp, PanelLeftClose } from 'lucide-react';
+import { Activity, ArrowUpRight, ChevronRight, FlaskConical, History, LayoutDashboard, Menu, ScanLine, X, Info, CircleHelp, PanelLeftClose } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ReadyStatus } from './Common';
