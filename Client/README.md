@@ -1,29 +1,35 @@
-# Welcome to your Lovable project
+# RadSyn Client
 
-This project was built with [Lovable](https://lovable.dev).
+## Run locally
 
-## Build with Lovable
+1. From the repository root, start the FastAPI backend as described in `Server/README.md`.
+2. In another terminal:
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+   ```powershell
+   cd Client
+   bun install
+   Copy-Item .env.example .env.local
+   bun run dev
+   ```
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+Set `VITE_API_BASE_URL` in `.env.local` if the API is not at `http://127.0.0.1:8000`.
 
-## Development
+## Implemented integration
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+- `POST /predict`: real DenseNet121 inference for five diseases.
+- `POST /gradcam`: computed, class-specific Grad-CAM overlay.
+- `POST /retrieve`: uncertainty-triggered historical case retrieval from the configured MIMIC-CXR SQLite index.
+- `POST /summarize`: optional grounded, non-diagnostic summary of the retrieved report excerpts.
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+Historical cases only appear after the authorized MIMIC-CXR dataset has been indexed. LLM summaries additionally require the backend `OPENAI_API_KEY` and `OPENAI_MODEL` variables.
+
+## Checks
+
+```powershell
+bun run lint
+bunx tsc --noEmit
+bun run build
+bun test
 ```
 
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+Uploaded case data currently lives in browser React state and is lost on page refresh. Persistent case history and authentication are not part of this integration.

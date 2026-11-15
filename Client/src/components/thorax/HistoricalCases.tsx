@@ -1,14 +1,127 @@
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, Database, LoaderCircle } from 'lucide-react';
+import { AlertCircle, BookOpenText, BrainCircuit, LoaderCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import xray from '@/assets/chest-xray.jpg';
-import { type HistoricalCase } from '@/lib/mockData';
-import { mockAnalysisService } from '@/lib/services/mockAnalysis';
-import { DemoBadge, EmptyState, SectionHeading } from './Common';
-export function HistoricalCases() {
-  const [cases, setCases] = useState<HistoricalCase[] | null>(null);
-  const [selected, setSelected] = useState<HistoricalCase | null>(null);
-  useEffect(() => { let active = true; mockAnalysisService.retrieveCases().then((items) => { if (active) setCases(items); }); return () => { active = false; }; }, []);
-  return <section><SectionHeading title="Similar Historical Cases" description="Historical reference cases — not diagnostic evidence."><DemoBadge /></SectionHeading>{cases === null ? <div className="historical-loading" role="status"><LoaderCircle className="animate-spin" />Loading historical cases…</div> : cases.length === 0 ? <EmptyState title="No historical cases available" description="No matching reference cases were returned for this analysis." /> : <div className="historical-grid">{cases.map((item) => <article className="historical-card" key={item.id}><div className="historical-card-header"><span><Database size={15} />{item.id}</span><span className="similarity-badge">{item.similarity}% similar</span></div><div className="historical-image"><img src={xray} alt={`Illustrative reference radiograph for ${item.id}`} loading="lazy" width={1024} height={1024} /><span>SAMPLE IMAGE</span></div><div className="historical-content"><h3>{item.finding}</h3><p>{item.report}</p><Button variant="outline" className="w-full" onClick={() => setSelected(item)}>View Case<ArrowUpRight size={15} /></Button></div></article>)}</div>}<Dialog open={selected !== null} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="case-dialog">{selected && <><DialogHeader><DialogTitle>{selected.id}</DialogTitle><DialogDescription>Mock historical reference information — not diagnostic evidence.</DialogDescription></DialogHeader><div className="case-detail-grid"><img src={xray} alt="Illustrative historical reference X-ray" width={1024} height={1024} /><div><span className="similarity-badge">{selected.similarity}% similarity</span><h3>{selected.finding}</h3><p className="text-muted-foreground text-sm">{selected.date}</p><h4>Radiology report · Mock excerpt</h4><p>{selected.report}</p><h4>Relevant observations</h4><ul>{selected.observations.map((observation) => <li key={observation}>{observation}</li>)}</ul></div></div><p className="medical-caution">These are fabricated demonstration cases, not actual records from MIMIC-CXR. Historical reference cases are not diagnostic evidence.</p></>}</DialogContent></Dialog></section>;
+import type { PredictionScore } from '@/lib/mockData';
+import { analysisService, type RetrievalResponse, type SummaryResponse } from '@/lib/services/analysis';
+import { EmptyState, SectionHeading } from './Common';
+
+interface HistoricalCasesProps {
+  image: string;
+  predictions: readonly PredictionScore[];
+}
+
+export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
+  const [retrieval, setRetrieval] = useState<RetrievalResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    setRetrieval(null);
+    setSummary(null);
+    analysisService.retrieveCases(null, image)
+      .then((result) => { if (active) setRetrieval(result); })
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Historical retrieval failed.');
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [image]);
+
+  async function generateSummary() {
+    if (!retrieval?.cases.length || summaryLoading) return;
+    setSummaryLoading(true);
+    setSummaryError('');
+    try {
+      const result = await analysisService.summarize(predictions, retrieval.cases);
+      setSummary(result);
+    } catch (cause) {
+      setSummaryError(cause instanceof Error ? cause.message : 'The historical context summary could not be generated.');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
+  return (
+    <section>
+      <SectionHeading
+        title="Similar Historical Cases"
+        description="Uncertainty-triggered retrieval from the configured MIMIC-CXR report index. Historical records are contextual references, not diagnostic evidence."
+      />
+      {loading && (
+        <div className="historical-loading" role="status">
+          <LoaderCircle className="animate-spin" /> Searching the historical case index…
+        </div>
+      )}
+      {!loading && error && (
+        <div className="medical-caution" role="alert">
+          <AlertCircle size={16} /> {error}
+        </div>
+      )}
+      {!loading && !error && retrieval && !retrieval.triggered && (
+        <EmptyState title="Historical retrieval was not triggered" description={retrieval.reason} />
+      )}
+      {!loading && !error && retrieval?.triggered && retrieval.cases.length === 0 && (
+        <EmptyState
+          title="No similar historical studies found"
+          description={`Retrieval was triggered for ${retrieval.retrieval_class}, but the configured index returned no matching studies.`}
+        />
+      )}
+      {!loading && !error && retrieval?.cases.length ? (
+        <>
+          <div className="historical-grid">
+            {retrieval.cases.map((item) => (
+              <article className="historical-card" key={item.id}>
+                <div className="historical-card-header">
+                  <span><BookOpenText size={15} /> {item.id}</span>
+                  <span className="similarity-badge">{item.similarity.toFixed(1)}% similar</span>
+                </div>
+                {item.image ? (
+                  <div className="historical-image">
+                    <img src={item.image} alt={`De-identified reference radiograph ${item.id}`} loading="lazy" />
+                    <span>MIMIC-CXR REFERENCE</span>
+                  </div>
+                ) : null}
+                <div className="historical-content">
+                  <h3>{item.finding}</h3>
+                  <p>{item.report || 'No report text was available for this study.'}</p>
+                  <small>{item.date}</small>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="ai-summary">
+            <span className="ai-summary-icon"><BrainCircuit size={22} /></span>
+            <div>
+              <div className="summary-heading">
+                <h2>Historical Context Summary</h2>
+                <span>{summary ? 'Generated from retrieved reports' : 'Requires configured LLM'}</span>
+              </div>
+              <p>
+                The summary compares the current model probability scores with the retrieved de-identified report text. It is not a diagnosis or treatment recommendation.
+              </p>
+              {!summary && (
+                <Button variant="outline" onClick={generateSummary} disabled={summaryLoading}>
+                  {summaryLoading ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+                  {summaryLoading ? 'Generating summary…' : 'Generate contextual summary'}
+                </Button>
+              )}
+              {summaryError && <p className="medical-caution" role="alert"><AlertCircle size={15} /> {summaryError}</p>}
+              {summary && (
+                <div className="historical-summary-text">
+                  <p>{summary.summary}</p>
+                  <small>Generated with {summary.model} · References: {summary.case_ids.join(', ')}</small>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
 }
