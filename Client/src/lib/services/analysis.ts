@@ -1,4 +1,4 @@
-import { historicalCases, predictions, type AnalysisCase, type Disease, type PredictionScore } from '@/lib/mockData';
+import { historicalCases, diseaseConfig, type AnalysisCase, type Disease, type PredictionScore } from '@/lib/mockData';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
@@ -34,12 +34,14 @@ export const analysisService = {
     const payload = await postImage('/predict', upload) as { filename: string; predictions: Record<Disease, number> };
     if (!payload?.predictions || typeof payload.predictions !== 'object') throw new Error('The prediction API returned an invalid response.');
 
-    const expected = predictions.map((item) => item.disease);
+    const expected = diseaseConfig.map((item) => item.disease);
     const scoreMap = payload.predictions;
-    if (expected.some((name) => typeof scoreMap[name] !== 'number')) throw new Error('The API response does not contain all five expected disease predictions.');
+    if (expected.some((name) => typeof scoreMap[name] !== 'number' || !Number.isFinite(scoreMap[name]))) {
+      throw new Error('The API response does not contain all five expected disease predictions.');
+    }
 
     const orderedScores: PredictionScore[] = expected.map((disease) => {
-      const configuration = predictions.find((item) => item.disease === disease)!;
+      const configuration = diseaseConfig.find((item) => item.disease === disease)!;
       return {
         disease,
         probability: Number((scoreMap[disease] * 100).toFixed(2)),
@@ -63,10 +65,13 @@ export const analysisService = {
 
   async gradcam(file: File | null, imageUrl: string, disease: Disease): Promise<{ heatmap: string; disease: Disease }> {
     const upload = await toUploadFile(file, imageUrl);
-    return await postImage('/gradcam', upload, { disease }) as { heatmap: string; disease: Disease };
+    const payload = await postImage('/gradcam', upload, { disease }) as { heatmap: string; disease: Disease };
+    if (!payload?.heatmap?.startsWith('data:image/png;base64,')) {
+      throw new Error('The Grad-CAM endpoint returned an invalid heatmap.');
+    }
+    return payload;
   },
 
-  // Historical retrieval is intentionally empty until the MIMIC-CXR index is configured.
+  // Historical retrieval remains empty until the authorized MIMIC-CXR index is configured.
   async retrieveCases() { return historicalCases; },
-  predictions,
 };
