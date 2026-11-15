@@ -1,8 +1,8 @@
 import { Info } from 'lucide-react';
-import { predictions as demoPredictions, type PredictionScore } from '@/lib/mockData';
+import { type PredictionScore } from '@/lib/mockData';
 import { SectionHeading } from './Common';
 
-export function PredictionOverview({ results = demoPredictions }: { results?: readonly PredictionScore[] }) {
+export function PredictionOverview({ results }: { results: readonly PredictionScore[] }) {
   return <section>
     <SectionHeading title="Disease Predictions" description="DenseNet121 multi-label classification · validation-selected thresholds" />
     {results.length === 0 ? <p>No model prediction data is available for this case.</p> : <div className="predictions-grid">
