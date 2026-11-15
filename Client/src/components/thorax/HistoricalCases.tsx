@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { type HistoricalCase } from '@/lib/mockData';
-import { mockAnalysisService } from '@/lib/services/mockAnalysis';
+import { analysisService } from '@/lib/services/analysis';
 import { EmptyState, SectionHeading } from './Common';
 
 export function HistoricalCases() {
   const [cases, setCases] = useState<HistoricalCase[] | null>(null);
   useEffect(() => {
     let active = true;
-    mockAnalysisService.retrieveCases().then((items) => { if (active) setCases(items); });
+    analysisService.retrieveCases().then((items) => { if (active) setCases(items); });
     return () => { active = false; };
   }, []);
 
