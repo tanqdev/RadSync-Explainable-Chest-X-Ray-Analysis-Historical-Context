@@ -22,14 +22,7 @@ export interface AnalysisCase {
   image?: string;
   predictions?: PredictionScore[];
 }
-export const analyses: AnalysisCase[] = [
-  { id: 'TX-2026-0048', date: '2026-10-06T14:32:00', finding: 'Atelectasis', confidence: 82, status: 'Completed' },
-  { id: 'TX-2026-0047', date: '2026-10-06T11:18:00', finding: 'Infiltration', confidence: 74, status: 'Completed' },
-  { id: 'TX-2026-0046', date: '2026-10-05T16:45:00', finding: 'Effusion', confidence: 91, status: 'Completed' },
-  { id: 'TX-2026-0045', date: '2026-10-05T10:06:00', finding: 'Nodule', confidence: 58, status: 'Review suggested' },
-  { id: 'TX-2026-0044', date: '2026-10-04T15:22:00', finding: 'No findings above threshold', confidence: 96, status: 'Completed' },
-  { id: 'TX-2026-0043', date: '2026-10-04T09:51:00', finding: 'Atelectasis', confidence: 88, status: 'Completed' },
-];
+export const analyses: AnalysisCase[] = [];
 export interface HistoricalCase { id: string; similarity: number; finding: string; report: string; observations: string[]; date: string }
 export const historicalCases: HistoricalCase[] = [];
 export const summary = '';
