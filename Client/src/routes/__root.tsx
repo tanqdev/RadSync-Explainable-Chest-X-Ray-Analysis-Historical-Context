@@ -80,10 +80,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ThoraxAI — Chest Imaging Research" },
+      { title: "RadSyn — Chest Imaging Research" },
       { name: "description", content: "Research prototype for explainable chest X-ray classification and localization." },
-      { name: "author", content: "ThoraxAI Research" },
-      { property: "og:title", content: "ThoraxAI — Chest Imaging Research" },
+      { name: "author", content: "RadSyn Research" },
+      { property: "og:title", content: "RadSyn — Chest Imaging Research" },
       { property: "og:description", content: "Research prototype for explainable chest X-ray classification and localization." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
