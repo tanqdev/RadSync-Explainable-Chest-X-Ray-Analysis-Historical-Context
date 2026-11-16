@@ -24,6 +24,23 @@ export interface SummaryResponse {
   case_ids: string[];
 }
 
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== 'object' || !('detail' in payload)) return fallback;
+  const detail = (payload as { detail?: unknown }).detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.map((item) => {
+      if (!item || typeof item !== 'object') return '';
+      const error = item as { loc?: unknown[]; msg?: unknown };
+      const location = Array.isArray(error.loc) ? error.loc.map(String).join('.') : 'request';
+      const message = typeof error.msg === 'string' ? error.msg : 'Invalid value';
+      return `${location}: ${message}`;
+    }).filter(Boolean);
+    if (messages.length) return messages.join('; ');
+  }
+  return fallback;
+}
+
 async function toUploadFile(file: File | null, imageUrl: string): Promise<File> {
   if (file) return file;
   const response = await fetch(imageUrl);
@@ -45,8 +62,7 @@ async function postImage(endpoint: string, file: File, extra?: Record<string, st
   }
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = payload && typeof payload.detail === 'string' ? payload.detail : `Request failed (${response.status}).`;
-    throw new Error(detail);
+    throw new Error(apiErrorMessage(payload, `Request failed (${response.status}).`));
   }
   return payload;
 }
@@ -126,8 +142,7 @@ export const analysisService = {
     }
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      const detail = body && typeof body.detail === 'string' ? body.detail : `Summary request failed (${response.status}).`;
-      throw new Error(detail);
+      throw new Error(apiErrorMessage(body, `Summary request failed (${response.status}).`));
     }
     if (typeof body?.summary !== 'string') throw new Error('The summary endpoint returned an invalid response.');
     return body as SummaryResponse;
