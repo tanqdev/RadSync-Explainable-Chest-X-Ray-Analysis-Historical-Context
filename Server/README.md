@@ -83,6 +83,20 @@ Retrieval is triggered only when at least one disease probability is within `RAD
 
 The DenseNet121 model was trained on a different dataset from the IU reference collection. The IU reports are historical context, not ground truth labels for the model, and similarity scores are prototype ranking scores rather than calibrated clinical probabilities. RadSyn is a research prototype, not a diagnostic service.
 
+## Evaluate Indiana University historical retrieval
+
+After building `data/iu_index.sqlite`, run the leave-one-case-out evaluation from the repository root:
+
+```cmd
+python -m ml.evaluate_iu_retrieval
+```
+
+The evaluator reuses vectors and de-identified report text already stored in SQLite; it does not reload the model, run inference, or require the image archive. It excludes each query case from its candidate list and ranks only cases in the same model-assigned retrieval class, matching the current retrieval filter.
+
+Weak relevance states are derived from explicit disease mentions in IU MeSH / Problems fields and explicit positive or negated mentions in Findings / Impression. A disease not mentioned in a report is treated as unjudged, not as a negative label. Metrics are calculated among cases with judged positive or negative report mentions. The report includes per-class model/report label alignment, Precision@K, Recall@K, MAP@K, NDCG@K, and a random-ranking precision baseline. It compares the current 65% score-vector + 35% Grad-CAM-region ranking against score-only and region-only ablations.
+
+By default, the script writes JSON, per-class CSV, and per-query CSV files to `data/iu_retrieval_evaluation/`, which is git-ignored. These are weak-label research metrics only: the reports are not expert-adjudicated relevance judgments, the evaluation is leave-one-case-out within the same collection (not external validation), and patient-level separation cannot be guaranteed because the current index does not store patient identifiers. Do not describe these metrics as clinical validation.
+
 ## Configure optional OpenAI summaries
 
 Set these variables before starting FastAPI:
