@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_IU_INDEX_PATH = PROJECT_ROOT / "data" / "iu_index.sqlite"
 DEFAULT_MIMIC_INDEX_PATH = PROJECT_ROOT / "data" / "mimic_index.sqlite"
 # Kept for compatibility with code that imported the old constant.
-DEFAULT_INDEX_PATH = DEFAULT_MIMIC_INDEX_PATH
+DEFAULT_INDEX_PATH = DEFAULT_IU_INDEX_PATH
 LABEL_WEIGHT = 0.65
 REGION_WEIGHT = 0.35
 UNCERTAINTY_DELTA = float(os.getenv("RADSYN_UNCERTAINTY_DELTA", "0.12"))
