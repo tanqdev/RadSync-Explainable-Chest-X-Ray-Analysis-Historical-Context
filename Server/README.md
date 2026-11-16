@@ -58,7 +58,7 @@ set RADSYN_IU_INDEX=data/iu_index.sqlite
 python -m uvicorn Server.main:app --host 127.0.0.1 --port 8000
 ```
 
-The backend prefers an explicitly configured `RADSYN_RETRIEVAL_INDEX`, then `RADSYN_IU_INDEX`, then `RADSYN_MIMIC_INDEX`. Without an explicit setting, it automatically prefers `data/iu_index.sqlite` when that file exists, otherwise it falls back to the legacy MIMIC path.
+The backend checks `RADSYN_RETRIEVAL_INDEX`, then `RADSYN_IU_INDEX`, then the legacy `RADSYN_MIMIC_INDEX`. With none set, it defaults to `data/iu_index.sqlite`. `RADSYN_DATASET_LABEL` can override the source label returned by the API.
 
 ## MIMIC-CXR retrieval (legacy option)
 
