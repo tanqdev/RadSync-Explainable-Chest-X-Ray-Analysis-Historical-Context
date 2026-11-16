@@ -9,3 +9,6 @@ data/mimic_index.sqlite
 
 # SQLite journals / WAL files for local retrieval indexes
 data/*.sqlite*
+
+# Local retrieval evaluation outputs
+data/iu_retrieval_evaluation/
