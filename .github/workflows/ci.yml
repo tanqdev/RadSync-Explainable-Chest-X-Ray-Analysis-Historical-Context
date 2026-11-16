@@ -39,4 +39,4 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile backend modules
-        run: python -m compileall -q Server
+        run: python -m compileall -q Server ml
