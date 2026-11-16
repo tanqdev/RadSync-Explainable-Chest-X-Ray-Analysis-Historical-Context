@@ -26,7 +26,6 @@ export function Results({ caseId }: { caseId: string }) {
     <div className="results-sections"><PredictionOverview results={analysis.predictions ?? []} />
       <GradCAMViewer image={analysis.image || xray} />
       <HistoricalCases image={analysis.image || xray} predictions={analysis.predictions ?? []} />
-      <section className="ai-summary"><span className="ai-summary-icon"><Info size={22} /></span><div><div className="summary-heading"><h2>Historical Context</h2><span>Pending integration</span></div><p>The historical case retrieval and LLM summarization services are not connected yet. No historical cases were retrieved for this prediction.</p><small>Planned component · No AI-generated summary was produced</small></div></section>
       <Disclaimer />
     </div></>;
 }
