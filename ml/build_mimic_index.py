@@ -9,9 +9,8 @@ from PIL import Image
 
 from Server.services.predictor import predict_image
 from Server.services.retrieval import (
-    DEFAULT_INDEX_PATH,
     _label_vector,
-    get_index_path,
+    get_mimic_index_path,
     region_descriptor,
     select_retrieval_class,
 )
@@ -50,7 +49,7 @@ def main():
     parser.add_argument("--image-root", required=True, type=Path, help="MIMIC-CXR-JPG directory containing files/.")
     parser.add_argument("--reports-root", type=Path, help="MIMIC-CXR reports directory containing files/. Defaults to --image-root.")
     parser.add_argument("--limit", type=int, default=1000, help="Maximum number of PA/AP studies to index (default: 1000).")
-    parser.add_argument("--index-path", type=Path, default=get_index_path())
+    parser.add_argument("--index-path", type=Path, default=get_mimic_index_path())
     parser.add_argument("--views", nargs="+", default=["PA", "AP"])
     args = parser.parse_args()
 
