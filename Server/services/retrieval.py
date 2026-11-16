@@ -26,18 +26,19 @@ REGION_WEIGHT = 0.35
 UNCERTAINTY_DELTA = float(os.getenv("RADSYN_UNCERTAINTY_DELTA", "0.12"))
 
 
+def get_mimic_index_path() -> Path:
+    configured = os.getenv("RADSYN_MIMIC_INDEX")
+    return Path(configured).expanduser().resolve() if configured else DEFAULT_MIMIC_INDEX_PATH
+
+
 def get_index_path() -> Path:
     """Resolve an explicitly configured index, otherwise prefer a built IU index."""
-    configured = (
-        os.getenv("RADSYN_RETRIEVAL_INDEX")
-        or os.getenv("RADSYN_IU_INDEX")
-        or os.getenv("RADSYN_MIMIC_INDEX")
-    )
+    configured = os.getenv("RADSYN_RETRIEVAL_INDEX") or os.getenv("RADSYN_IU_INDEX")
     if configured:
         return Path(configured).expanduser().resolve()
     if DEFAULT_IU_INDEX_PATH.is_file():
         return DEFAULT_IU_INDEX_PATH
-    return DEFAULT_MIMIC_INDEX_PATH
+    return get_mimic_index_path()
 
 
 def get_dataset_label(index_path: Path | None = None) -> str:
