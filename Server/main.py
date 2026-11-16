@@ -10,7 +10,7 @@ from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
 from Server.services.predictor import CLASSES, DEVICE, explain_image, predict_image
-from Server.services.retrieval import retrieve_similar_cases
+from Server.services.retrieval import get_dataset_label, get_index_path, retrieve_similar_cases
 
 app = FastAPI(
     title="RadSyn API",
@@ -60,7 +60,8 @@ def health():
         "service": "RadSyn API",
         "model": "DenseNet121",
         "device": str(DEVICE),
-        "retrieval_index": os.path.exists(os.getenv("RADSYN_MIMIC_INDEX", "data/mimic_index.sqlite")),
+        "retrieval_index": get_index_path().is_file(),
+        "retrieval_source": get_dataset_label(),
         "llm_configured": bool(os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_MODEL")),
     }
 
