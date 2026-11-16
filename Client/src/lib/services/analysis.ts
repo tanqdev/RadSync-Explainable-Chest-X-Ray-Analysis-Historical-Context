@@ -5,7 +5,7 @@ const API_BASE_URL = (import.meta.env['VITE_API_BASE_URL'] || 'http://127.0.0.1:
 export interface HistoricalCaseResult {
   id: string;
   similarity: number;
-  finding: string;
+  retrieval_class: string;
   report: string;
   source: string;
   image?: string | null;
@@ -110,7 +110,7 @@ export const analysisService = {
       cases: cases.map((item) => ({
         id: item.id,
         similarity: item.similarity,
-        finding: item.finding,
+        retrieval_class: item.retrieval_class,
         report: item.report,
       })),
     };
