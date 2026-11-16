@@ -116,13 +116,6 @@ class SummaryRequest(BaseModel):
 
 @app.post("/summarize")
 def summarize(payload: SummaryRequest = Body(...)):
-    api_key = os.getenv("OPENAI_API_KEY")
-    model_name = os.getenv("OPENAI_MODEL")
-    if not api_key or not model_name:
-        raise HTTPException(
-            status_code=503,
-            detail="LLM summary is not configured. Set OPENAI_API_KEY and OPENAI_MODEL on the backend.",
-        )
     if not payload.cases:
         raise HTTPException(status_code=422, detail="At least one retrieved historical report is required.")
 
@@ -135,6 +128,45 @@ def summarize(payload: SummaryRequest = Body(...)):
         }
         for case in payload.cases
     ]
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    model_name = os.getenv("OPENAI_MODEL")
+    if not api_key or not model_name:
+        score_lines = [
+            f"{name}: {float(score):.1f}%"
+            for name, score in sorted(
+                payload.predictions.items(),
+                key=lambda item: float(item[1]),
+                reverse=True,
+            )
+        ]
+        summary_lines = [
+            "Local evidence summary (no external LLM configured).",
+            "Current model probability outputs (not diagnoses): "
+            + "; ".join(score_lines),
+            "Retrieved historical report excerpts (context only):",
+        ]
+        for case in payload.cases:
+            report_lines = [
+                line.strip()
+                for line in case.report.splitlines()
+                if line.strip()
+            ]
+            excerpt = " ".join(report_lines[2:])[:420]
+            summary_lines.append(
+                f"{case.id} — {case.finding}, {case.similarity:.1f}% similarity. "
+                f"{excerpt or 'No report excerpt available.'}"
+            )
+        summary_lines.append(
+            "These historical records are reference context only. "
+            "The classifier outputs and this summary are not a medical diagnosis."
+        )
+        return {
+            "summary": "\\n".join(summary_lines),
+            "model": "Local evidence summary",
+            "case_ids": [case.id for case in payload.cases],
+        }
+
     prompt_data = {
         "current_model_probabilities_percent": payload.predictions,
         "retrieved_deidentified_historical_cases": grounded_cases,
@@ -155,6 +187,10 @@ def summarize(payload: SummaryRequest = Body(...)):
             input=json.dumps(prompt_data, ensure_ascii=False),
             max_output_tokens=450,
         )
-        return {"summary": response.output_text, "model": model_name, "case_ids": [case.id for case in payload.cases]}
+        return {
+            "summary": response.output_text,
+            "model": model_name,
+            "case_ids": [case.id for case in payload.cases],
+        }
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"LLM summary request failed: {exc}") from exc
