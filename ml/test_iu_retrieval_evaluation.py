@@ -55,7 +55,7 @@ class RankingMetricTests(unittest.TestCase):
         self.assertAlmostEqual(result["precision"], 1 / 3)
         self.assertAlmostEqual(result["recall"], 1.0)
         self.assertAlmostEqual(result["map"], 1 / 3)
-        self.assertAlmostEqual(result["ndcg"], 1 / (1 + 0.0) / (1 / 2 + 1 / 1))
+        self.assertAlmostEqual(result["ndcg"], 0.5)
 
 
 if __name__ == "__main__":
