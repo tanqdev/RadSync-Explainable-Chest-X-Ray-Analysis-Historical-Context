@@ -6,3 +6,6 @@ Client/.env
 # Local historical retrieval indexes (contain local paths and report excerpts)
 data/iu_index.sqlite
 data/mimic_index.sqlite
+
+# SQLite journals / WAL files for local retrieval indexes
+data/*.sqlite*
