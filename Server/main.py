@@ -106,7 +106,7 @@ async def retrieve(file: UploadFile = File(...), top_k: int = Form(5)):
 class RetrievedCaseInput(BaseModel):
     id: str = Field(max_length=128)
     similarity: float = Field(ge=0, le=100)
-    finding: str = Field(max_length=128)
+    retrieval_class: str = Field(max_length=128)
     report: str = Field(max_length=12000)
 
 
@@ -124,7 +124,7 @@ def summarize(payload: SummaryRequest = Body(...)):
         {
             "case_id": case.id,
             "similarity_percent": case.similarity,
-            "retrieval_class": case.finding,
+            "retrieval_class": case.retrieval_class,
             "report_text": case.report,
         }
         for case in payload.cases
@@ -155,8 +155,9 @@ def summarize(payload: SummaryRequest = Body(...)):
             ]
             excerpt = " ".join(report_lines[2:])[:420]
             summary_lines.append(
-                f"{case.id} — {case.finding}, {case.similarity:.1f}% similarity. "
-                f"{excerpt or 'No report excerpt available.'}"
+                f"{case.id} — model-assigned retrieval class: {case.retrieval_class}; "
+                f"prototype ranking score: {case.similarity:.1f}/100. "
+                f"Source report excerpt: {excerpt or 'No report excerpt available.'}"
             )
         summary_lines.append(
             "These historical records are reference context only. "
@@ -174,8 +175,11 @@ def summarize(payload: SummaryRequest = Body(...)):
     }
     instructions = (
         "You are writing a concise research-support comparison for a chest X-ray AI prototype. "
-        "Use only the supplied model probability values and historical report text. "
-        "Describe similarities and differences as reported observations, and cite historical records using their case IDs. "
+        "Use only the supplied model probability values, retrieval metadata, and historical report text. "
+        "The retrieval_class field is a RadSyn classifier-assigned index category used for filtering; it is not an IU ground-truth label and is not necessarily stated in the source report. "
+        "Never present retrieval_class as a radiologist-reported finding. Distinguish model-assigned metadata from observations explicitly stated in the report. "
+        "Treat similarity values as prototype ranking scores, not probabilities or clinical confidence. "
+        "Describe similarities and differences only as supported by the report text, and cite records using their case IDs. "
         "Do not diagnose the current image, infer missing findings, recommend treatment, or claim clinical certainty. "
         "State explicitly that historical reports are context only and the summary is not a medical diagnosis. "
         "If the available reports do not support a comparison, say so plainly."
