@@ -15,7 +15,7 @@ from Server.services.retrieval import get_dataset_label, get_index_path, retriev
 app = FastAPI(
     title="RadSyn API",
     description="DenseNet121 chest X-ray classification, Grad-CAM, and historical case retrieval API",
-    version="1.2.0",
+    version="1.3.0",
 )
 
 origins = os.getenv(
@@ -62,6 +62,7 @@ def health():
         "device": str(DEVICE),
         "retrieval_index": get_index_path().is_file(),
         "retrieval_source": get_dataset_label(),
+        "retrieval_index_path": str(get_index_path()),
         "llm_configured": bool(os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_MODEL")),
     }
 
