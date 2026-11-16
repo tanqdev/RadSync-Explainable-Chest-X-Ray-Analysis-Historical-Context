@@ -1,0 +1,8 @@
+# Local secrets
+.env
+Server/.env
+Client/.env
+
+# Local historical retrieval indexes (contain local paths and report excerpts)
+data/iu_index.sqlite
+data/mimic_index.sqlite
