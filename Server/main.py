@@ -162,7 +162,7 @@ def summarize(payload: SummaryRequest = Body(...)):
             "The classifier outputs and this summary are not a medical diagnosis."
         )
         return {
-            "summary": "\\n".join(summary_lines),
+            "summary": "\n".join(summary_lines),
             "model": "Local evidence summary",
             "case_ids": [case.id for case in payload.cases],
         }
