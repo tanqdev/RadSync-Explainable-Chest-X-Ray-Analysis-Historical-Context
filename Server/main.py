@@ -7,7 +7,7 @@ from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from PIL import Image, UnidentifiedImageError
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from Server.services.predictor import CLASSES, DEVICE, explain_image, predict_image
 from Server.services.retrieval import get_dataset_label, get_index_path, retrieve_similar_cases
@@ -106,7 +106,7 @@ async def retrieve(file: UploadFile = File(...), top_k: int = Form(5)):
 class RetrievedCaseInput(BaseModel):
     id: str = Field(max_length=128)
     similarity: float = Field(ge=0, le=100)
-    retrieval_class: str = Field(max_length=128)
+    retrieval_class: str = Field(max_length=128, validation_alias=AliasChoices("retrieval_class", "finding"))
     report: str = Field(max_length=12000)
 
 
