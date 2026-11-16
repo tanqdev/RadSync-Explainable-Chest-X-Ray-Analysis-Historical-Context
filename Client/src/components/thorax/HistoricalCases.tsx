@@ -51,7 +51,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
     <section>
       <SectionHeading
         title="Similar Historical Cases"
-        description="Uncertainty-triggered retrieval from the dataset configured on the RadSyn backend. Historical records are contextual references, not diagnostic evidence."
+        description="Uncertainty-triggered retrieval from the configured reference dataset. The class on each card is assigned by RadSyn for indexing, not taken from the original radiology report. Similarity values are prototype ranking scores, not clinical probabilities."
       />
       {loading && (
         <div className="historical-loading" role="status">
@@ -79,7 +79,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
               <article className="historical-card" key={item.id}>
                 <div className="historical-card-header">
                   <span><BookOpenText size={15} /> {item.id}</span>
-                  <span className="similarity-badge">{item.similarity.toFixed(1)}% similar</span>
+                  <span className="similarity-badge">Ranking score {item.similarity.toFixed(1)}/100</span>
                 </div>
                 {item.image ? (
                   <div className="historical-image">
@@ -88,8 +88,9 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                   </div>
                 ) : null}
                 <div className="historical-content">
-                  <h3>{item.finding}</h3>
-                  <p>{item.report || 'No report text was available for this study.'}</p>
+                  <div className="eyebrow">MODEL-ASSIGNED INDEX CATEGORY</div>
+                  <h3>{item.retrieval_class}</h3>
+                  <p><strong>Source report text:</strong> {item.report || 'No report text was available for this study.'}</p>
                   <small>{item.source || retrieval.source}</small>
                 </div>
               </article>
@@ -103,7 +104,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                 <span>{summary ? `Generated · ${summary.model}` : 'LLM optional'}</span>
               </div>
               <p>
-                The summary compares model probability scores with retrieved report text. It is contextual research support, not a diagnosis or treatment recommendation.
+                The summary compares model probabilities with source report text. The category shown on each card is RadSyn-assigned retrieval metadata, not an original radiologist label. This is contextual research support, not a diagnosis or treatment recommendation.
               </p>
               {!summary && (
                 <Button variant="outline" onClick={generateSummary} disabled={summaryLoading}>
