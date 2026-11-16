@@ -51,7 +51,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
     <section>
       <SectionHeading
         title="Similar Historical Cases"
-        description="Uncertainty-triggered retrieval from the configured MIMIC-CXR report index. Historical records are contextual references, not diagnostic evidence."
+        description="Uncertainty-triggered retrieval from the dataset configured on the RadSyn backend. Historical records are contextual references, not diagnostic evidence."
       />
       {loading && (
         <div className="historical-loading" role="status">
@@ -84,13 +84,13 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                 {item.image ? (
                   <div className="historical-image">
                     <img src={item.image} alt={`De-identified reference radiograph ${item.id}`} loading="lazy" />
-                    <span>MIMIC-CXR REFERENCE</span>
+                    <span>{(item.source || retrieval.source || 'HISTORICAL REFERENCE').toUpperCase()}</span>
                   </div>
                 ) : null}
                 <div className="historical-content">
                   <h3>{item.finding}</h3>
                   <p>{item.report || 'No report text was available for this study.'}</p>
-                  <small>{item.date}</small>
+                  <small>{item.source || retrieval.source}</small>
                 </div>
               </article>
             ))}
@@ -100,10 +100,10 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
             <div>
               <div className="summary-heading">
                 <h2>Historical Context Summary</h2>
-                <span>{summary ? 'Generated from retrieved reports' : 'Requires configured LLM'}</span>
+                <span>{summary ? `Generated · ${summary.model}` : 'LLM optional'}</span>
               </div>
               <p>
-                The summary compares the current model probability scores with the retrieved de-identified report text. It is not a diagnosis or treatment recommendation.
+                The summary compares model probability scores with retrieved report text. It is contextual research support, not a diagnosis or treatment recommendation.
               </p>
               {!summary && (
                 <Button variant="outline" onClick={generateSummary} disabled={summaryLoading}>
