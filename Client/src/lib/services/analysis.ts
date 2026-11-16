@@ -7,12 +7,13 @@ export interface HistoricalCaseResult {
   similarity: number;
   finding: string;
   report: string;
-  date: string;
+  source: string;
   image?: string | null;
 }
 export interface RetrievalResponse {
   triggered: boolean;
   reason: string;
+  source: string;
   retrieval_class?: Disease;
   threshold_margin?: number;
   cases: HistoricalCaseResult[];
@@ -97,7 +98,7 @@ export const analysisService = {
   async retrieveCases(file: File | null, imageUrl: string, topK = 5): Promise<RetrievalResponse> {
     const upload = await toUploadFile(file, imageUrl);
     const payload = await postImage('/retrieve', upload, { top_k: String(topK) }) as RetrievalResponse;
-    if (typeof payload?.triggered !== 'boolean' || !Array.isArray(payload.cases)) {
+    if (typeof payload?.triggered !== 'boolean' || !Array.isArray(payload.cases) || typeof payload.source !== 'string') {
       throw new Error('The historical retrieval endpoint returned an invalid response.');
     }
     return payload;
