@@ -170,7 +170,7 @@ def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]
         cases.append({
             "id": str(row["case_id"]),
             "similarity": round(max(0.0, min(1.0, similarity)) * 100, 1),
-            "finding": retrieval_class,
+            "retrieval_class": retrieval_class,
             "report": (row["report_text"] or "")[:12000],
             "source": dataset_label,
             "image": _make_thumbnail(row["image_path"]),
