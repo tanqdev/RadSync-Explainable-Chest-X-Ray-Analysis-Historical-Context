@@ -32,13 +32,13 @@ def get_mimic_index_path() -> Path:
 
 
 def get_index_path() -> Path:
-    """Resolve an explicitly configured index, otherwise prefer a built IU index."""
-    configured = os.getenv("RADSYN_RETRIEVAL_INDEX") or os.getenv("RADSYN_IU_INDEX")
-    if configured:
-        return Path(configured).expanduser().resolve()
-    if DEFAULT_IU_INDEX_PATH.is_file():
-        return DEFAULT_IU_INDEX_PATH
-    return get_mimic_index_path()
+    """Resolve an explicitly configured index, defaulting to the active IU MVP index."""
+    configured = (
+        os.getenv("RADSYN_RETRIEVAL_INDEX")
+        or os.getenv("RADSYN_IU_INDEX")
+        or os.getenv("RADSYN_MIMIC_INDEX")
+    )
+    return Path(configured).expanduser().resolve() if configured else DEFAULT_IU_INDEX_PATH
 
 
 def get_dataset_label(index_path: Path | None = None) -> str:
