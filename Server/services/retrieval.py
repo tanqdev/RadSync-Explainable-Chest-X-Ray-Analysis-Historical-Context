@@ -17,15 +17,41 @@ from Server.services.predictor import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_INDEX_PATH = PROJECT_ROOT / "data" / "mimic_index.sqlite"
+DEFAULT_IU_INDEX_PATH = PROJECT_ROOT / "data" / "iu_index.sqlite"
+DEFAULT_MIMIC_INDEX_PATH = PROJECT_ROOT / "data" / "mimic_index.sqlite"
+# Kept for compatibility with code that imported the old constant.
+DEFAULT_INDEX_PATH = DEFAULT_IU_INDEX_PATH
 LABEL_WEIGHT = 0.65
 REGION_WEIGHT = 0.35
 UNCERTAINTY_DELTA = float(os.getenv("RADSYN_UNCERTAINTY_DELTA", "0.12"))
 
 
-def get_index_path() -> Path:
+def get_mimic_index_path() -> Path:
     configured = os.getenv("RADSYN_MIMIC_INDEX")
-    return Path(configured).expanduser().resolve() if configured else DEFAULT_INDEX_PATH
+    return Path(configured).expanduser().resolve() if configured else DEFAULT_MIMIC_INDEX_PATH
+
+
+def get_index_path() -> Path:
+    """Resolve an explicitly configured index, defaulting to the active IU MVP index."""
+    configured = (
+        os.getenv("RADSYN_RETRIEVAL_INDEX")
+        or os.getenv("RADSYN_IU_INDEX")
+        or os.getenv("RADSYN_MIMIC_INDEX")
+    )
+    return Path(configured).expanduser().resolve() if configured else DEFAULT_IU_INDEX_PATH
+
+
+def get_dataset_label(index_path: Path | None = None) -> str:
+    configured = os.getenv("RADSYN_DATASET_LABEL")
+    if configured:
+        return configured
+    path = index_path or get_index_path()
+    stem = path.stem.lower()
+    if "iu" in stem or "indiana" in stem:
+        return "Indiana University Chest X-ray (Open-i)"
+    if "mimic" in stem:
+        return "MIMIC-CXR"
+    return "Historical reference dataset"
 
 
 def select_retrieval_class(scores: dict[str, float]) -> tuple[str, float]:
@@ -83,9 +109,16 @@ def _make_thumbnail(image_path: str) -> str | None:
 
 def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]:
     index_path = get_index_path()
+    dataset_label = get_dataset_label(index_path)
     if not index_path.is_file():
+        if "Indiana" in dataset_label:
+            build_hint = "Build it with: python -m ml.build_iu_index"
+        elif "MIMIC" in dataset_label:
+            build_hint = "Build it with: python -m ml.build_mimic_index --metadata-csv ... --image-root ..."
+        else:
+            build_hint = "Set RADSYN_RETRIEVAL_INDEX to a built SQLite index."
         raise FileNotFoundError(
-            f"MIMIC-CXR retrieval index not found at {index_path}. Build it with ml/build_mimic_index.py."
+            f"{dataset_label} retrieval index not found at {index_path}. {build_hint}"
         )
 
     query_scores = predict_image(image)
@@ -96,6 +129,7 @@ def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]
             "reason": "No disease probability is sufficiently close to its validation threshold.",
             "retrieval_class": retrieval_class,
             "threshold_margin": round(margin, 4),
+            "source": dataset_label,
             "cases": [],
         }
 
@@ -121,6 +155,8 @@ def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]
         try:
             candidate_labels = np.asarray(json.loads(row["label_vector"]), dtype=np.float32)
             candidate_region = np.asarray(json.loads(row["region_vector"]), dtype=np.float32)
+            if candidate_labels.shape != query_labels.shape or candidate_region.shape != query_region.shape:
+                continue
             label_similarity = float(np.dot(query_labels, candidate_labels))
             region_similarity = float(np.dot(query_region, candidate_region))
             similarity = LABEL_WEIGHT * label_similarity + REGION_WEIGHT * region_similarity
@@ -134,9 +170,9 @@ def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]
         cases.append({
             "id": str(row["case_id"]),
             "similarity": round(max(0.0, min(1.0, similarity)) * 100, 1),
-            "finding": retrieval_class,
+            "retrieval_class": retrieval_class,
             "report": (row["report_text"] or "")[:12000],
-            "date": "De-identified MIMIC-CXR reference study",
+            "source": dataset_label,
             "image": _make_thumbnail(row["image_path"]),
         })
 
@@ -145,5 +181,6 @@ def retrieve_similar_cases(image: Image.Image, top_k: int = 5) -> dict[str, Any]
         "reason": "Historical retrieval triggered by a disease probability near its validation threshold.",
         "retrieval_class": retrieval_class,
         "threshold_margin": round(margin, 4),
+        "source": dataset_label,
         "cases": cases,
     }

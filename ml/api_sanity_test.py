@@ -27,7 +27,7 @@ THRESHOLDS = {
 df = pd.read_csv(TEST_SET)
 
 print("=" * 80)
-print("THORAXAI — 20 IMAGE API SANITY TEST")
+print("RADSYNC — 20 IMAGE API SANITY TEST")
 print("=" * 80)
 print(f"Images to test: {len(df)}")
 print()

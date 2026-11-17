@@ -13,6 +13,7 @@ from torchvision import models, transforms
 from sklearn.metrics import (
     roc_auc_score,
     f1_score,
+    accuracy_score,
     precision_recall_curve,
 )
 
@@ -23,7 +24,7 @@ from sklearn.metrics import (
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DATA_ROOT = Path(r"D:\archive")
+DATA_ROOT = Path(os.environ.get("RADSYN_NIH_DATA_ROOT", r"D:\archive"))
 
 VAL_CSV = PROJECT_ROOT / "data" / "splits" / "validation.csv"
 TEST_CSV = PROJECT_ROOT / "data" / "splits" / "test.csv"
@@ -66,19 +67,31 @@ transform = transforms.Compose([
 # ============================================================
 
 print("Building image index...")
+print(f"NIH image root: {DATA_ROOT}")
 
-image_index = {}
+if not DATA_ROOT.exists():
+    raise FileNotFoundError(
+        f"NIH image directory does not exist: {DATA_ROOT}. "
+        "Set RADSYN_NIH_DATA_ROOT to the folder containing the images_*/ "
+        "directories, or update DATA_ROOT in ml/evaluate_model.py."
+    )
 
-for folder in sorted(DATA_ROOT.glob("images_*")):
-    image_dir = folder / "images"
+# Search recursively so the evaluator also supports archives with an extra
+# directory level while retaining the Image Index -> file-name lookup.
+image_index = {
+    image_path.name: image_path
+    for image_path in DATA_ROOT.rglob("*.png")
+    if image_path.is_file()
+}
 
-    if not image_dir.exists():
-        continue
+print(f"Indexed {len(image_index):,} PNG images.")
 
-    for image_path in image_dir.glob("*.png"):
-        image_index[image_path.name] = image_path
-
-print(f"Indexed {len(image_index):,} images.")
+if not image_index:
+    raise FileNotFoundError(
+        f"No PNG images were found under {DATA_ROOT}. "
+        "Check that the NIH ChestX-ray14 image archives are extracted and "
+        "that RADSYN_NIH_DATA_ROOT points to their common parent directory."
+    )
 
 
 # ============================================================
@@ -479,6 +492,40 @@ print(
 
 
 # ============================================================
+# TEST ACCURACY
+# ============================================================
+
+print()
+print("Test accuracy:")
+
+test_class_accuracies = []
+
+for i, disease in enumerate(CLASSES):
+    class_accuracy = accuracy_score(
+        test_true[:, i],
+        test_predictions[:, i],
+    )
+    test_class_accuracies.append(class_accuracy)
+
+    print(
+        f"{disease:15s}: {class_accuracy:.4f}"
+    )
+
+# Mean of the five one-vs-rest class accuracies.
+macro_class_accuracy = float(np.mean(test_class_accuracies))
+
+# Strict multi-label / subset accuracy:
+# all five labels must be correct for an image to count as correct.
+subset_accuracy = accuracy_score(
+    test_true,
+    test_predictions,
+)
+
+print(f"Macro class accuracy : {macro_class_accuracy:.4f}")
+print(f"Exact-match accuracy: {subset_accuracy:.4f}")
+
+
+# ============================================================
 # FINAL SUMMARY
 # ============================================================
 
@@ -492,6 +539,8 @@ print(f"Validation AUC    : {macro_auc:.4f}")
 print(f"Validation F1     : {macro_f1:.4f}")
 print(f"Test Macro AUC    : {test_macro_auc:.4f}")
 print(f"Test Macro F1     : {test_macro_f1:.4f}")
+print(f"Test Macro Accuracy: {macro_class_accuracy:.4f}")
+print(f"Test Exact Match   : {subset_accuracy:.4f}")
 
 print()
 print("Thresholds:")

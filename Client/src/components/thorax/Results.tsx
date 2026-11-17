@@ -16,7 +16,7 @@ export function Results({ caseId }: { caseId: string }) {
   const analysis = item;
   function downloadReport() {
     const scores = analysis.predictions ?? [];
-    const text = `RadSyn — Research Analysis Report\n${analysis.id}\n${new Date(analysis.date).toISOString()}\n\nMODEL OUTPUTS (PROBABILITIES; NOT A DIAGNOSIS)\n${scores.map((p) => `${p.disease}: ${p.probability.toFixed(2)}%`).join('\n')}\n\n\n${disclaimer}`;
+    const text = `RadSync — Research Analysis Report\n${analysis.id}\n${new Date(analysis.date).toISOString()}\n\nMODEL OUTPUTS (PROBABILITIES; NOT A DIAGNOSIS)\n${scores.map((p) => `${p.disease}: ${p.probability.toFixed(2)}%`).join('\n')}\n\n\n${disclaimer}`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${analysis.id}-research-report.txt`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -26,7 +26,6 @@ export function Results({ caseId }: { caseId: string }) {
     <div className="results-sections"><PredictionOverview results={analysis.predictions ?? []} />
       <GradCAMViewer image={analysis.image || xray} />
       <HistoricalCases image={analysis.image || xray} predictions={analysis.predictions ?? []} />
-      <section className="ai-summary"><span className="ai-summary-icon"><Info size={22} /></span><div><div className="summary-heading"><h2>Historical Context</h2><span>Pending integration</span></div><p>The historical case retrieval and LLM summarization services are not connected yet. No historical cases were retrieved for this prediction.</p><small>Planned component · No AI-generated summary was produced</small></div></section>
       <Disclaimer />
     </div></>;
 }

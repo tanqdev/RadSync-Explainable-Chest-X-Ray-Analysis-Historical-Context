@@ -5,14 +5,15 @@ const API_BASE_URL = (import.meta.env['VITE_API_BASE_URL'] || 'http://127.0.0.1:
 export interface HistoricalCaseResult {
   id: string;
   similarity: number;
-  finding: string;
+  retrieval_class: string;
   report: string;
-  date: string;
+  source: string;
   image?: string | null;
 }
 export interface RetrievalResponse {
   triggered: boolean;
   reason: string;
+  source: string;
   retrieval_class?: Disease;
   threshold_margin?: number;
   cases: HistoricalCaseResult[];
@@ -21,6 +22,23 @@ export interface SummaryResponse {
   summary: string;
   model: string;
   case_ids: string[];
+}
+
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== 'object' || !('detail' in payload)) return fallback;
+  const detail = (payload as { detail?: unknown }).detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.map((item) => {
+      if (!item || typeof item !== 'object') return '';
+      const error = item as { loc?: unknown[]; msg?: unknown };
+      const location = Array.isArray(error.loc) ? error.loc.map(String).join('.') : 'request';
+      const message = typeof error.msg === 'string' ? error.msg : 'Invalid value';
+      return `${location}: ${message}`;
+    }).filter(Boolean);
+    if (messages.length) return messages.join('; ');
+  }
+  return fallback;
 }
 
 async function toUploadFile(file: File | null, imageUrl: string): Promise<File> {
@@ -40,12 +58,11 @@ async function postImage(endpoint: string, file: File, extra?: Record<string, st
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', body: formData });
   } catch {
-    throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}. Start FastAPI and check VITE_API_BASE_URL.`);
+    throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}. Start FastAPI and check VITE_API_BASE_URL.`);
   }
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = payload && typeof payload.detail === 'string' ? payload.detail : `Request failed (${response.status}).`;
-    throw new Error(detail);
+    throw new Error(apiErrorMessage(payload, `Request failed (${response.status}).`));
   }
   return payload;
 }
@@ -97,7 +114,7 @@ export const analysisService = {
   async retrieveCases(file: File | null, imageUrl: string, topK = 5): Promise<RetrievalResponse> {
     const upload = await toUploadFile(file, imageUrl);
     const payload = await postImage('/retrieve', upload, { top_k: String(topK) }) as RetrievalResponse;
-    if (typeof payload?.triggered !== 'boolean' || !Array.isArray(payload.cases)) {
+    if (typeof payload?.triggered !== 'boolean' || !Array.isArray(payload.cases) || typeof payload.source !== 'string') {
       throw new Error('The historical retrieval endpoint returned an invalid response.');
     }
     return payload;
@@ -109,24 +126,31 @@ export const analysisService = {
       cases: cases.map((item) => ({
         id: item.id,
         similarity: item.similarity,
-        finding: item.finding,
+        retrieval_class: item.retrieval_class,
         report: item.report,
       })),
     };
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 200_000);
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}/summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-    } catch {
-      throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}.`);
+    } catch (cause) {
+      if (controller.signal.aborted) {
+        throw new Error('Gemini summary timed out after 200 seconds. Check the backend terminal and Gemini API status, then retry.');
+      }
+      throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}. Check that FastAPI is running.`);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      const detail = body && typeof body.detail === 'string' ? body.detail : `Summary request failed (${response.status}).`;
-      throw new Error(detail);
+      throw new Error(apiErrorMessage(body, `Summary request failed (${response.status}).`));
     }
     if (typeof body?.summary !== 'string') throw new Error('The summary endpoint returned an invalid response.');
     return body as SummaryResponse;

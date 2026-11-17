@@ -1,0 +1,22 @@
+# Local secrets
+.env
+Server/.env
+Client/.env
+
+# Local historical retrieval indexes (contain local paths and report excerpts)
+data/iu_index.sqlite
+data/mimic_index.sqlite
+
+# SQLite journals / WAL files for local retrieval indexes
+data/*.sqlite*
+
+# Local retrieval evaluation outputs
+data/iu_retrieval_evaluation/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+
+# Generated offline model-evaluation reports
+ml/evaluation/test_metrics_summary.json
+ml/evaluation/test_metrics_by_class.csv
