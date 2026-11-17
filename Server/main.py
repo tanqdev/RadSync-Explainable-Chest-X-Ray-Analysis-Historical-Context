@@ -244,7 +244,7 @@ def summarize(payload: SummaryRequest = Body(...)):
         return {
             "summary": summary_text.strip(),
             "model": model_name,
-            "case_ids": [case.id for case in payload.cases],
+            "case_ids": [case.id for case in summary_cases],
         }
     except Exception as exc:
         error_text = str(exc)
