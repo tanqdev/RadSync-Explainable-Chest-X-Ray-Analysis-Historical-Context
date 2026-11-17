@@ -44,7 +44,7 @@ def read_report(path: Path) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build a RadSyn MIMIC-CXR historical retrieval index.")
+    parser = argparse.ArgumentParser(description="Build a RadSync MIMIC-CXR historical retrieval index.")
     parser.add_argument("--metadata-csv", required=True, type=Path)
     parser.add_argument("--image-root", required=True, type=Path, help="MIMIC-CXR-JPG directory containing files/.")
     parser.add_argument("--reports-root", type=Path, help="MIMIC-CXR reports directory containing files/. Defaults to --image-root.")
