@@ -13,7 +13,7 @@ from Server.services.predictor import CLASSES, DEVICE, explain_image, predict_im
 from Server.services.retrieval import get_dataset_label, get_index_path, retrieve_similar_cases
 
 app = FastAPI(
-    title="RadSyn API",
+    title="RadSync API",
     description="DenseNet121 chest X-ray classification, Grad-CAM, and historical case retrieval API",
     version="1.3.0",
 )
@@ -57,7 +57,7 @@ def validate_upload(file: UploadFile):
 def health():
     return {
         "status": "ok",
-        "service": "RadSyn API",
+        "service": "RadSync API",
         "model": "DenseNet121",
         "device": str(DEVICE),
         "retrieval_index": get_index_path().is_file(),
@@ -176,7 +176,7 @@ def summarize(payload: SummaryRequest = Body(...)):
     instructions = (
         "You are writing a concise research-support comparison for a chest X-ray AI prototype. "
         "Use only the supplied model probability values, retrieval metadata, and historical report text. "
-        "The retrieval_class field is a RadSyn classifier-assigned index category used for filtering; it is not an IU ground-truth label and is not necessarily stated in the source report. "
+        "The retrieval_class field is a RadSync classifier-assigned index category used for filtering; it is not an IU ground-truth label and is not necessarily stated in the source report. "
         "Never present retrieval_class as a radiologist-reported finding. Distinguish model-assigned metadata from observations explicitly stated in the report. "
         "Treat similarity values as prototype ranking scores, not probabilities or clinical confidence. "
         "Describe similarities and differences only as supported by the report text, and cite records using their case IDs. "
