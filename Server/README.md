@@ -83,6 +83,21 @@ Retrieval is triggered only when at least one disease probability is within `RAD
 
 The DenseNet121 model was trained on a different dataset from the IU reference collection. The IU reports are historical context, not ground truth labels for the model, and similarity scores are prototype ranking scores rather than calibrated clinical probabilities. RadSyn is a research prototype, not a diagnostic service.
 
+## Recalculate classifier metrics from saved predictions
+
+The original NIH image archive is required for a fresh image-inference evaluation using `python ml\\evaluate_model.py`. If the archive is unavailable but the saved `ml/evaluation/test_predictions.npz` and validation-selected `ml/evaluation/thresholds.csv` are present, the metrics can be reproduced without loading any images or the model.
+
+Install the small evaluation dependencies and run from the repository root:
+
+```cmd
+pip install -r ml\\requirements-evaluation.txt
+python -m ml.evaluate_saved_predictions
+```
+
+The script writes `ml/evaluation/test_metrics_summary.json` and `ml/evaluation/test_metrics_by_class.csv`. It reports per-class accuracy, precision, recall/sensitivity, specificity, F1, and ROC-AUC, along with macro and micro averages and exact-match (subset) accuracy.
+
+Macro class accuracy is the mean of the five one-vs-rest accuracies and includes true negatives. Exact-match accuracy counts a study as correct only when all five disease labels match. ROC-AUC is evaluated across probability thresholds; F1 and accuracy use the thresholds selected on the validation split. Do not present macro class accuracy without explaining its definition.
+
 ## Evaluate Indiana University historical retrieval
 
 After building `data/iu_index.sqlite`, run the leave-one-case-out evaluation from the repository root:
