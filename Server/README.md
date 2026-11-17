@@ -18,7 +18,7 @@ The trained checkpoint is expected at `models/densenet121_best.pth`. The predict
 - `POST /predict` — multipart field `file`; returns five DenseNet121 sigmoid probabilities.
 - `POST /gradcam` — multipart fields `file` and `disease`; returns a computed Grad-CAM overlay as a PNG data URL.
 - `POST /retrieve` — multipart fields `file` and optional `top_k`; performs uncertainty-triggered historical case retrieval.
-- `POST /summarize` — JSON body containing model probabilities and retrieved report excerpts. Uses the configured OpenAI model when available; otherwise returns a clearly labelled local evidence summary.
+- `POST /summarize` — JSON body containing model probabilities and retrieved report excerpts. Uses the configured Gemini model when available; otherwise returns a clearly labelled local evidence summary.
 
 Accepted image uploads: PNG/JPEG, maximum 10 MB.
 
