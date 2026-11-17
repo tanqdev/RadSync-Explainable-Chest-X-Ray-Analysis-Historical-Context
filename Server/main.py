@@ -12,11 +12,11 @@ from openai import OpenAI
 from PIL import Image, UnidentifiedImageError
 from pydantic import AliasChoices, BaseModel, Field
 
+# Load local secrets before importing application modules that read environment settings.
+load_dotenv(Path(__file__).resolve().with_name(".env"), override=False)
+
 from Server.services.predictor import CLASSES, DEVICE, explain_image, predict_image
 from Server.services.retrieval import get_dataset_label, get_index_path, retrieve_similar_cases
-
-# Load local secrets from Server/.env; explicit process environment values take precedence.
-load_dotenv(Path(__file__).resolve().with_name(".env"), override=False)
 
 app = FastAPI(
     title="RadSync API",
