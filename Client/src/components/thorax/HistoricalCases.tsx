@@ -35,8 +35,14 @@ function scoreWidth(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
 
+function displaySourceReport(report: string): string {
+  // IU/Open-i uses XXX/XXXX tokens where text was removed during de-identification.
+  // The original report is kept unchanged in storage; only the UI label is clearer.
+  return report.replace(/X{3,}/g, '[REDACTED]');
+}
+
 function getReportBlocks(report: string): ReportBlock[] {
-  const cleaned = report.trim();
+  const cleaned = displaySourceReport(report).trim();
   if (!cleaned) return [];
 
   const parts = cleaned.split(/(?:^|\n)\s*(FINDINGS|IMPRESSION|INDICATION|COMPARISON|HISTORY|TECHNIQUE)\s*:\s*/gi);
@@ -317,6 +323,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
 
                   <div className="hc-report-content">
                     <div className="hc-report-title"><FileText size={13} /> Source report excerpts</div>
+                    <p className="hc-redaction-note">The source dataset masks some text for privacy. Masked values are shown as [REDACTED] and cannot be recovered from this copy.</p>
                     {reportBlocks.length ? (
                       <div className="hc-report-sections">
                         {reportBlocks.map((block, blockIndex) => (
@@ -332,7 +339,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                     {item.report && (
                       <details className="hc-report-full">
                         <summary>Read complete source report</summary>
-                        <p>{item.report}</p>
+                        <p>{displaySourceReport(item.report)}</p>
                       </details>
                     )}
                   </div>
@@ -355,10 +362,10 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                 <div className="hc-summary-action">
                   <Button variant="outline" onClick={generateSummary} disabled={summaryLoading}>
                     {summaryLoading ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-                    {summaryLoading ? 'Generating narrative…' : 'Generate narrative summary'}
+                    {summaryLoading ? 'Gemini is generating…' : summaryError ? 'Retry summary' : 'Generate narrative summary'}
                     {!summaryLoading && <ArrowRight size={14} />}
                   </Button>
-                  <span className="hc-summary-disclaimer">Uses current model scores and the retrieved source reports.</span>
+                  <span className="hc-summary-disclaimer">{summaryLoading ? 'Gemini is analysing the retrieved reports. The request will stop after 75 seconds if the provider does not respond.' : 'Uses current model scores and the retrieved source reports.'}</span>
                 </div>
               )}
 
