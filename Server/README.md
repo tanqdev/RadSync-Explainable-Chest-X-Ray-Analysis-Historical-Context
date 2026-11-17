@@ -135,7 +135,9 @@ Install backend dependencies after pulling these changes:
 pip install -r Server\requirements.txt
 ```
 
-The server uses the official `google-genai` Python SDK and Gemini Interactions API. Summary requests set `store=False` so the interaction is not stored as an Interaction record. Restart FastAPI after editing the environment file. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
+The server uses the official `google-genai` Python SDK and the standard `models.generate_content` endpoint for this single-turn task. The provider request has a 60-second timeout; the frontend also stops waiting after 75 seconds and displays a retryable error. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
+
+The IU/Open-i source reports may contain `XXX` or `XXXX` de-identification masks. The frontend displays these as `[REDACTED]` for readability while retaining the source report unchanged. The removed values cannot be reconstructed from the de-identified dataset and must not be guessed.
 
 ## Dataset and local data handling
 
