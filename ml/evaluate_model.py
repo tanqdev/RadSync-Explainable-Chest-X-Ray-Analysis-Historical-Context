@@ -13,6 +13,7 @@ from torchvision import models, transforms
 from sklearn.metrics import (
     roc_auc_score,
     f1_score,
+    accuracy_score,
     precision_recall_curve,
 )
 
@@ -479,6 +480,47 @@ print(
 
 
 # ============================================================
+# TEST ACCURACY
+# ============================================================
+
+print()
+print("Test accuracy:")
+
+test_class_accuracies = []
+
+for i, disease in enumerate(CLASSES):
+    class_accuracy = accuracy_score(
+        test_true[:, i],
+        test_predictions[:, i],
+    )
+    test_class_accuracies.append(class_accuracy)
+
+    print(
+        f"{disease:15s}: {class_accuracy:.4f}"
+    )
+
+# Mean of the five one-vs-rest class accuracies.
+macro_class_accuracy = float(np.mean(test_class_accuracies))
+
+# Fraction of all individual image-disease decisions that are correct.
+# This is the pooled/label-wise accuracy for the multi-label task.
+labelwise_accuracy = float(
+    np.mean(test_true == test_predictions)
+)
+
+# Strict multi-label / subset accuracy:
+# all five labels must be correct for an image to count as correct.
+subset_accuracy = accuracy_score(
+    test_true,
+    test_predictions,
+)
+
+print(f"Macro class accuracy : {macro_class_accuracy:.4f}")
+print(f"Label-wise accuracy  : {labelwise_accuracy:.4f}")
+print(f"Exact-match accuracy: {subset_accuracy:.4f}")
+
+
+# ============================================================
 # FINAL SUMMARY
 # ============================================================
 
@@ -492,6 +534,9 @@ print(f"Validation AUC    : {macro_auc:.4f}")
 print(f"Validation F1     : {macro_f1:.4f}")
 print(f"Test Macro AUC    : {test_macro_auc:.4f}")
 print(f"Test Macro F1     : {test_macro_f1:.4f}")
+print(f"Test Macro Accuracy: {macro_class_accuracy:.4f}")
+print(f"Test Label Accuracy: {labelwise_accuracy:.4f}")
+print(f"Test Exact Match   : {subset_accuracy:.4f}")
 
 print()
 print("Thresholds:")
