@@ -1,4 +1,4 @@
-# RadSyn API
+# RadSync API
 
 ## Run locally (Windows CMD)
 
@@ -81,7 +81,7 @@ Set `RADSYN_MIMIC_INDEX` to select a non-default MIMIC index path.
 
 Retrieval is triggered only when at least one disease probability is within `RADSYN_UNCERTAINTY_DELTA` of its validation-selected threshold. Similarity combines normalized disease-score vectors (65%) and Grad-CAM region descriptors (35%). The current region descriptor is based on normalized image coordinates and coarse quadrants; it is not lung-segmentation-aware or clinically validated.
 
-The DenseNet121 model was trained on a different dataset from the IU reference collection. The IU reports are historical context, not ground truth labels for the model, and similarity scores are prototype ranking scores rather than calibrated clinical probabilities. RadSyn is a research prototype, not a diagnostic service.
+The DenseNet121 model was trained on a different dataset from the IU reference collection. The IU reports are historical context, not ground truth labels for the model, and similarity scores are prototype ranking scores rather than calibrated clinical probabilities. RadSync is a research prototype, not a diagnostic service.
 
 ## Recalculate classifier metrics from saved predictions
 
