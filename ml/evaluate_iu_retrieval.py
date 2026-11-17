@@ -458,7 +458,7 @@ def main():
     write_csv(class_csv, class_rows)
     write_csv(query_csv, query_rows)
 
-    print("RadSync IU historical retrieval evaluation")
+    print("RadSyncc IU historical retrieval evaluation")
     print("==========================================")
     print("Index cases loaded: {}".format(len(cases)))
     print("Cases with at least one explicit report label: {}".format(total_labeled))
