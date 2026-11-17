@@ -5,7 +5,7 @@ const capabilities = [
   { icon: BrainCircuit, title: 'Multi-label classification', status: 'Implemented', text: 'DenseNet121 returns probability scores for Atelectasis, Effusion, Infiltration, Mass, and Nodule through the FastAPI prediction endpoint.' },
   { icon: Fingerprint, title: 'Explainable AI', status: 'Implemented', text: 'Class-specific Grad-CAM overlays are computed from model gradients and displayed alongside the predictions.' },
   { icon: Database, title: 'Historical case retrieval', status: 'Implemented', text: 'An uncertainty-triggered retrieval service searches a locally built Indiana University / Open-i SQLite index and returns similar reference studies with their source reports.' },
-  { icon: Sparkles, title: 'Contextual summaries', status: 'Implemented', text: 'A deterministic local evidence summary is available by default. An optional OpenAI model can produce a report-grounded summary when configured.' },
+  { icon: Sparkles, title: 'Contextual summaries', status: 'Implemented', text: 'A deterministic local evidence summary is available by default. An optional Gemini model can produce a report-grounded summary when configured.' },
 ];
 
 export function About() {
@@ -33,7 +33,7 @@ export function About() {
       <SectionHeading title="Technology Stack" description="The technologies used in the current research prototype." />
       <div className="stack-grid">
         <div><Code2 size={21} /><h3>Frontend</h3><div className="technology-badges">{['React', 'TypeScript', 'TanStack Router', 'Vite'].map((name) => <span key={name}>{name}</span>)}</div></div>
-        <div><Layers3 size={21} /><h3>ML & Backend</h3><div className="technology-badges">{['Python', 'PyTorch', 'DenseNet121', 'FastAPI', 'Grad-CAM', 'NumPy', 'SQLite', 'OpenAI API (optional)'].map((name) => <span key={name}>{name}</span>)}</div></div>
+        <div><Layers3 size={21} /><h3>ML & Backend</h3><div className="technology-badges">{['Python', 'PyTorch', 'DenseNet121', 'FastAPI', 'Grad-CAM', 'NumPy', 'SQLite', 'Google Gemini API (optional)'].map((name) => <span key={name}>{name}</span>)}</div></div>
       </div>
     </section>
     <section className="about-section">
