@@ -133,7 +133,7 @@ def compact_report_for_summary(report: str) -> str:
         "impression": 650,
     }
     sections: dict[str, str] = {}
-    for block in report.split("\\n\\n"):
+    for block in report.split("\n\n"):
         label, separator, value = block.partition(":")
         key = label.strip().lower()
         if separator and key in limits and value.strip():
@@ -142,7 +142,7 @@ def compact_report_for_summary(report: str) -> str:
     if not sections:
         return report.strip()[:1600]
 
-    return "\\n".join(
+    return "\n".join(
         f"{label.title()}: {sections[label]}"
         for label in ("indication", "comparison", "findings", "impression")
         if label in sections
