@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
+from google import genai
 from PIL import Image, UnidentifiedImageError
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -69,7 +69,9 @@ def health():
         "retrieval_index": get_index_path().is_file(),
         "retrieval_source": get_dataset_label(),
         "retrieval_index_path": str(get_index_path()),
-        "llm_configured": bool(os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_MODEL")),
+        "llm_configured": bool(os.getenv("GEMINI_API_KEY") and os.getenv("GEMINI_MODEL")),
+        "llm_provider": "Google Gemini",
+        "llm_model": os.getenv("GEMINI_MODEL") if os.getenv("GEMINI_API_KEY") and os.getenv("GEMINI_MODEL") else None,
     }
 
 
@@ -136,8 +138,8 @@ def summarize(payload: SummaryRequest = Body(...)):
         for case in payload.cases
     ]
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    model_name = os.getenv("OPENAI_MODEL")
+    api_key = os.getenv("GEMINI_API_KEY")
+    model_name = os.getenv("GEMINI_MODEL")
     if not api_key or not model_name:
         score_lines = [
             f"{name}: {float(score):.1f}%"
@@ -180,26 +182,34 @@ def summarize(payload: SummaryRequest = Body(...)):
         "retrieved_deidentified_historical_cases": grounded_cases,
     }
     instructions = (
-        "You are writing a concise research-support comparison for a chest X-ray AI prototype. "
-        "Use only the supplied model probability values, retrieval metadata, and historical report text. "
-        "The retrieval_class field is a RadSync classifier-assigned index category used for filtering; it is not an IU ground-truth label and is not necessarily stated in the source report. "
-        "Never present retrieval_class as a radiologist-reported finding. Distinguish model-assigned metadata from observations explicitly stated in the report. "
-        "Treat similarity values as prototype ranking scores, not probabilities or clinical confidence. "
-        "Describe similarities and differences only as supported by the report text, and cite records using their case IDs. "
-        "Do not diagnose the current image, infer missing findings, recommend treatment, or claim clinical certainty. "
-        "State explicitly that historical reports are context only and the summary is not a medical diagnosis. "
-        "If the available reports do not support a comparison, say so plainly."
+        "You are preparing a concise, evidence-grounded research synthesis for RadSync, "
+        "a chest X-ray AI research prototype. Do not diagnose the uploaded image. "
+        "Use only the supplied DenseNet121 probability outputs, retrieval metadata, "
+        "and text in the de-identified historical reports. "
+        "Organize the response with these short headings: "
+        "1) Model output, 2) What the historical reports state, "
+        "3) Supported similarities and differences, 4) Limitations. "
+        "Clearly distinguish current model probabilities from historical report statements. "
+        "The retrieval_class field is a RadSync-assigned index category, not an original radiologist label. "
+        "Similarity values are prototype ranking scores, not probabilities or clinical confidence. "
+        "Cite every historical observation with its case ID. "
+        "Do not infer missing findings, fill in XXXX redactions, recommend treatment, or claim certainty. "
+        "If the reports do not support a comparison, say so. "
+        "End with a clear statement that this is research context only, not a diagnosis."
     )
     try:
-        client = OpenAI(api_key=api_key)
-        response = client.responses.create(
+        client = genai.Client(api_key=api_key)
+        interaction = client.interactions.create(
             model=model_name,
-            instructions=instructions,
             input=json.dumps(prompt_data, ensure_ascii=False),
-            max_output_tokens=450,
+            system_instruction=instructions,
+            store=False,
         )
+        summary_text = interaction.output_text
+        if not summary_text or not summary_text.strip():
+            raise ValueError("Gemini returned an empty summary.")
         return {
-            "summary": response.output_text,
+            "summary": summary_text.strip(),
             "model": model_name,
             "case_ids": [case.id for case in payload.cases],
         }
