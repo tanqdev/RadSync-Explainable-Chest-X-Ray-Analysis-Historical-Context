@@ -112,30 +112,30 @@ Weak relevance states are derived from explicit disease mentions in IU MeSH / Pr
 
 By default, the script writes JSON, per-class CSV, and per-query CSV files to `data/iu_retrieval_evaluation/`, which is git-ignored. These are weak-label research metrics only: the reports are not expert-adjudicated relevance judgments, the evaluation is leave-one-case-out within the same collection (not external validation), and patient-level separation cannot be guaranteed because the current index does not store patient identifiers. Do not describe these metrics as clinical validation.
 
-## Configure optional OpenAI summaries
+## Configure optional Gemini summaries
 
 The backend loads `Server/.env` automatically. Create the local file from the example:
 
 ```cmd
-copy Server\.env.example Server\.env
+copy Server\\.env.example Server\\.env
 ```
 
-Open `Server/.env` and set:
+Open `Server/.env` and set your Gemini API key and model:
 
 ```dotenv
-OPENAI_API_KEY=your-secret-api-key
-OPENAI_MODEL=gpt-5.6-luna
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
-Keep the key in this backend-only file. It is covered by the repository's `.gitignore`; never place it in `Client/.env`, frontend source, screenshots, or commits. Environment variables already set in the shell take precedence over values in `Server/.env`.
+Create/manage the key in [Google AI Studio](https://aistudio.google.com/app/apikey). Keep it in this backend-only file. It is covered by the repository's `.gitignore`; never put it in `Client/.env`, frontend source, screenshots, or commits. Environment variables already set in the shell take precedence over values in `Server/.env`.
 
-Install the backend dependencies after pulling these changes:
+Install backend dependencies after pulling these changes:
 
 ```cmd
-pip install -r Server\requirements.txt
+pip install -r Server\\requirements.txt
 ```
 
-Restart FastAPI after editing the environment file. The `/health` endpoint reports whether both LLM variables are configured, and `/summarize` uses the OpenAI Responses API when configured. Without them, the endpoint falls back to a labelled local evidence summary. Neither summary diagnoses the uploaded image.
+The server uses the official `google-genai` Python SDK and Gemini Interactions API. Summary requests set `store=False` so the interaction is not stored as an Interaction record. Restart FastAPI after editing the environment file. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
 
 ## Dataset and local data handling
 
