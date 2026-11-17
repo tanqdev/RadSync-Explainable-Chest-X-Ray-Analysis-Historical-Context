@@ -50,7 +50,7 @@ function getReportBlocks(report: string): ReportBlock[] {
 
   for (let index = 1; index < parts.length; index += 2) {
     const text = parts[index + 1]?.trim();
-    if (text) blocks.push({ label: parts[index], text });
+    if (text) blocks.push({ label: parts[index] ?? 'Report excerpt', text });
   }
 
   if (blocks.length) return blocks.slice(0, 2);
