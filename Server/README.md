@@ -117,7 +117,7 @@ By default, the script writes JSON, per-class CSV, and per-query CSV files to `d
 The backend loads `Server/.env` automatically. Create the local file from the example:
 
 ```cmd
-copy Server\\.env.example Server\\.env
+copy Server\.env.example Server\.env
 ```
 
 Open `Server/.env` and set your Gemini API key and model:
@@ -132,7 +132,7 @@ Create/manage the key in [Google AI Studio](https://aistudio.google.com/app/apik
 Install backend dependencies after pulling these changes:
 
 ```cmd
-pip install -r Server\\requirements.txt
+pip install -r Server\requirements.txt
 ```
 
 The server uses the official `google-genai` Python SDK and Gemini Interactions API. Summary requests set `store=False` so the interaction is not stored as an Interaction record. Restart FastAPI after editing the environment file. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
