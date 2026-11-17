@@ -124,7 +124,7 @@ Open `Server/.env` and set your Gemini API key and model:
 
 ```dotenv
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Create/manage the key in [Google AI Studio](https://aistudio.google.com/app/apikey). Keep it in this backend-only file. It is covered by the repository's `.gitignore`; never put it in `Client/.env`, frontend source, screenshots, or commits. Environment variables already set in the shell take precedence over values in `Server/.env`.
@@ -135,7 +135,7 @@ Install backend dependencies after pulling these changes:
 pip install -r Server\requirements.txt
 ```
 
-The server uses the official `google-genai` Python SDK and the standard `models.generate_content` endpoint for this single-turn task. The provider request has a 60-second timeout; the frontend also stops waiting after 75 seconds and displays a retryable error. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
+The server uses the official `google-genai` Python SDK and the standard `models.generate_content` endpoint for this single-turn task. To reduce latency, synthesis uses only the three highest-ranked cases and trims each report to the indication, comparison, findings, and impression sections. The provider request has a 180-second client timeout; the frontend stops waiting after 200 seconds and displays a retryable error. The `/health` endpoint reports whether both Gemini variables are configured; it does not validate the key. If they are absent, `/summarize` returns a labelled local evidence summary. Neither output diagnoses the uploaded image.
 
 The IU/Open-i source reports may contain `XXX` or `XXXX` de-identification masks. The frontend displays these as `[REDACTED]` for readability while retaining the source report unchanged. The removed values cannot be reconstructed from the de-identified dataset and must not be guessed.
 
