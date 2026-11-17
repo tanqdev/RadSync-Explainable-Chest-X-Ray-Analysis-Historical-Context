@@ -365,7 +365,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
                     {summaryLoading ? 'Gemini is generating…' : summaryError ? 'Retry summary' : 'Generate narrative summary'}
                     {!summaryLoading && <ArrowRight size={14} />}
                   </Button>
-                  <span className="hc-summary-disclaimer">{summaryLoading ? 'Gemini is analysing the retrieved reports. The request will stop after 75 seconds if the provider does not respond.' : 'Uses current model scores and the retrieved source reports.'}</span>
+                  <span className="hc-summary-disclaimer">{summaryLoading ? 'Gemini is analysing the retrieved reports. The request has a bounded timeout; larger reports are trimmed before sending.' : 'Uses current model scores and the retrieved source reports.'}</span>
                 </div>
               )}
 
