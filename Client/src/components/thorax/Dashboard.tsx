@@ -5,7 +5,7 @@ import xray from '@/assets/chest-xray.jpg';
 import { CaseTable } from './CaseTable';
 import { useAnalyses } from './AnalysisContext';
 import { Disclaimer, SectionHeading } from './Common';
-const workflow = [{ icon: ScanLine, title: 'Upload X-ray', text: 'Start with a chest radiograph' }, { icon: BrainCircuit, title: 'AI classification', text: 'Five thoracic conditions' }, { icon: Fingerprint, title: 'Visual explanation', text: 'Computed Grad-CAM heatmaps' }, { icon: Database, title: 'Historical context', text: 'MIMIC-CXR retrieval (pending)' }];
+const workflow = [{ icon: ScanLine, title: 'Upload X-ray', text: 'Start with a chest radiograph' }, { icon: BrainCircuit, title: 'AI classification', text: 'Five thoracic conditions' }, { icon: Fingerprint, title: 'Visual explanation', text: 'Computed Grad-CAM heatmaps' }, { icon: Database, title: 'Historical context', text: 'Indiana University / Open-i case retrieval' }];
 export function Dashboard() {
   const { cases } = useAnalyses();
   const analysed = cases.length;
