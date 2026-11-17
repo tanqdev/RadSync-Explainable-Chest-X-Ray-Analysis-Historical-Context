@@ -131,7 +131,7 @@ export const analysisService = {
       })),
     };
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 75_000);
+    const timeoutId = window.setTimeout(() => controller.abort(), 200_000);
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}/summarize`, {
@@ -142,7 +142,7 @@ export const analysisService = {
       });
     } catch (cause) {
       if (controller.signal.aborted) {
-        throw new Error('Gemini summary timed out after 75 seconds. Check the backend terminal and Gemini API status, then retry.');
+        throw new Error('Gemini summary timed out after 200 seconds. Check the backend terminal and Gemini API status, then retry.');
       }
       throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}. Check that FastAPI is running.`);
     } finally {
