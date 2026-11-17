@@ -130,15 +130,23 @@ export const analysisService = {
         report: item.report,
       })),
     };
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 75_000);
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}/summarize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-    } catch {
-      throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}.`);
+    } catch (cause) {
+      if (controller.signal.aborted) {
+        throw new Error('Gemini summary timed out after 75 seconds. Check the backend terminal and Gemini API status, then retry.');
+      }
+      throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}. Check that FastAPI is running.`);
+    } finally {
+      window.clearTimeout(timeoutId);
     }
     const body = await response.json().catch(() => null);
     if (!response.ok) {
