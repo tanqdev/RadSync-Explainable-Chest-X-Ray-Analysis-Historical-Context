@@ -124,19 +124,48 @@ class SummaryRequest(BaseModel):
     cases: list[RetrievedCaseInput] = Field(default_factory=list, max_length=5)
 
 
+def compact_report_for_summary(report: str) -> str:
+    """Keep the clinically relevant source sections while bounding LLM input size."""
+    limits = {
+        "indication": 240,
+        "comparison": 220,
+        "findings": 650,
+        "impression": 650,
+    }
+    sections: dict[str, str] = {}
+    for block in report.split("\\n\\n"):
+        label, separator, value = block.partition(":")
+        key = label.strip().lower()
+        if separator and key in limits and value.strip():
+            sections[key] = value.strip()[: limits[key]]
+
+    if not sections:
+        return report.strip()[:1600]
+
+    return "\\n".join(
+        f"{label.title()}: {sections[label]}"
+        for label in ("indication", "comparison", "findings", "impression")
+        if label in sections
+    )
+
+
 @app.post("/summarize")
 def summarize(payload: SummaryRequest = Body(...)):
     if not payload.cases:
         raise HTTPException(status_code=422, detail="At least one retrieved historical report is required.")
 
+    # The UI may display five ranked studies, but synthesis only needs the
+    # top three. Keep report sections short to avoid oversized prompts and
+    # reduce Gemini's probability of returning DEADLINE_EXCEEDED.
+    summary_cases = payload.cases[:3]
     grounded_cases: list[dict[str, Any]] = [
         {
             "case_id": case.id,
             "similarity_percent": case.similarity,
             "retrieval_class": case.retrieval_class,
-            "report_text": case.report,
+            "report_text": compact_report_for_summary(case.report),
         }
-        for case in payload.cases
+        for case in summary_cases
     ]
 
     api_key = os.getenv("GEMINI_API_KEY")
@@ -183,37 +212,32 @@ def summarize(payload: SummaryRequest = Body(...)):
         "retrieved_deidentified_historical_cases": grounded_cases,
     }
     instructions = (
-        "You are preparing a concise, evidence-grounded research synthesis for RadSync, "
-        "a chest X-ray AI research prototype. Do not diagnose the uploaded image. "
-        "Use only the supplied DenseNet121 probability outputs, retrieval metadata, "
-        "and text in the de-identified historical reports. "
-        "Organize the response with these short headings: "
-        "1) Model output, 2) What the historical reports state, "
-        "3) Supported similarities and differences, 4) Limitations. "
-        "Clearly distinguish current model probabilities from historical report statements. "
-        "The retrieval_class field is a RadSync-assigned index category, not an original radiologist label. "
-        "Similarity values are prototype ranking scores, not probabilities or clinical confidence. "
-        "Cite every historical observation with its case ID. "
-        "Do not infer missing findings, fill in XXXX redactions, recommend treatment, or claim certainty. "
-        "If the reports do not support a comparison, say so. "
-        "End with a clear statement that this is research context only, not a diagnosis."
+        "Write a concise research-only synthesis for RadSync, a chest X-ray AI prototype. "
+        "Use only the supplied model scores and de-identified historical report excerpts. "
+        "Use four brief headings: Model output; Historical report observations; "
+        "Supported comparison; Limitations. "
+        "Separate current model scores from historical report statements and cite each "
+        "historical observation with its case ID. The retrieval category is assigned by "
+        "RadSync, not an original radiologist label. Ranking scores are not probabilities. "
+        "Never infer missing findings, reconstruct XXX/XXXX redactions, diagnose, or recommend treatment. "
+        "If evidence is insufficient, say so. End by stating this is research context, not a diagnosis."
     )
     try:
         # This is a single-turn synthesis task, so use the standard Generate Content
         # API rather than the Interactions API. The explicit timeout prevents a
         # stalled provider request from leaving the browser spinner running forever.
-        client = genai.Client(
+        with genai.Client(
             api_key=api_key,
-            http_options={"timeout": 60_000},
-        )
-        response = client.models.generate_content(
-            model=model_name,
-            contents=json.dumps(prompt_data, ensure_ascii=False),
-            config=types.GenerateContentConfig(
-                system_instruction=instructions,
-                max_output_tokens=1400,
-            ),
-        )
+            http_options=types.HttpOptions(timeout=180_000),
+        ) as client:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=json.dumps(prompt_data, ensure_ascii=False),
+                config=types.GenerateContentConfig(
+                    system_instruction=instructions,
+                    max_output_tokens=850,
+                ),
+            )
         summary_text = response.text
         if not summary_text or not summary_text.strip():
             raise ValueError("Gemini returned an empty response. Check model availability and safety feedback.")
@@ -226,8 +250,17 @@ def summarize(payload: SummaryRequest = Body(...)):
         error_text = str(exc)
         error_lower = error_text.lower()
         provider_code = getattr(exc, "code", None)
+        status_code_from_error = getattr(exc, "status_code", None)
+        provider_code = provider_code or status_code_from_error
 
-        if provider_code == 429:
+        if provider_code == 504 or "deadline_exceeded" in error_lower:
+            status_code = 504
+            detail = (
+                "Gemini exceeded its generation deadline. RadSync already limits the "
+                "request to the three highest-ranked reports. Retry once; if it persists, "
+                "change GEMINI_MODEL to gemini-3.5-flash-lite in Server/.env."
+            )
+        elif provider_code == 429:
             status_code = 503
             detail = "Gemini rate limit or quota reached. Check Google AI Studio API usage and retry shortly."
         elif provider_code in (401, 403):
