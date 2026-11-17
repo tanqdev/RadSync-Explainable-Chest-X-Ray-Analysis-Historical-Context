@@ -15,7 +15,7 @@ RadSync is a research prototype that combines multi-label chest X-ray classifica
    - Nodule
 2. **Explains a selected class prediction** with Grad-CAM heatmaps generated from the DenseNet121 feature extractor.
 3. **Retrieves historical reference cases** from a local Indiana University / Open-i SQLite index when a model score lies near its validation-selected threshold.
-4. **Displays source reports and contextual summaries.** A local evidence summary works without an LLM; optional OpenAI Responses API summarization can be configured separately.
+4. **Displays source reports and contextual summaries.** A local evidence summary works without an LLM; optional Google Gemini summarization can be configured separately.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ flowchart LR
 | Classification | PyTorch, Torchvision, DenseNet121 |
 | Explainability | Grad-CAM |
 | Retrieval | NumPy feature vectors, SQLite |
-| Summarization | Local evidence summary; optional OpenAI API |
+| Summarization | Local evidence summary; optional Gemini API |
 | Development | Bun, Git, GitHub, VS Code |
 
 ## Model evaluation
