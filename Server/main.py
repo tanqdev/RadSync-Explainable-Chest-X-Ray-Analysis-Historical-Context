@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
+from google.genai import types
 from PIL import Image, UnidentifiedImageError
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -198,20 +199,48 @@ def summarize(payload: SummaryRequest = Body(...)):
         "End with a clear statement that this is research context only, not a diagnosis."
     )
     try:
-        client = genai.Client(api_key=api_key)
-        interaction = client.interactions.create(
-            model=model_name,
-            input=json.dumps(prompt_data, ensure_ascii=False),
-            system_instruction=instructions,
-            store=False,
+        # This is a single-turn synthesis task, so use the standard Generate Content
+        # API rather than the Interactions API. The explicit timeout prevents a
+        # stalled provider request from leaving the browser spinner running forever.
+        client = genai.Client(
+            api_key=api_key,
+            http_options={"timeout": 60_000},
         )
-        summary_text = interaction.output_text
+        response = client.models.generate_content(
+            model=model_name,
+            contents=json.dumps(prompt_data, ensure_ascii=False),
+            config=types.GenerateContentConfig(
+                system_instruction=instructions,
+                max_output_tokens=1400,
+            ),
+        )
+        summary_text = response.text
         if not summary_text or not summary_text.strip():
-            raise ValueError("Gemini returned an empty summary.")
+            raise ValueError("Gemini returned an empty response. Check model availability and safety feedback.")
         return {
             "summary": summary_text.strip(),
             "model": model_name,
             "case_ids": [case.id for case in payload.cases],
         }
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"LLM summary request failed: {exc}") from exc
+        error_text = str(exc)
+        error_lower = error_text.lower()
+        provider_code = getattr(exc, "code", None)
+
+        if provider_code == 429:
+            status_code = 503
+            detail = "Gemini rate limit or quota reached. Check Google AI Studio API usage and retry shortly."
+        elif provider_code in (401, 403):
+            status_code = 502
+            detail = "Gemini rejected the API key or the key does not have access to this API. Check GEMINI_API_KEY in Server/.env."
+        elif provider_code == 404:
+            status_code = 502
+            detail = f"Gemini model '{model_name}' was not found or is not available to this API key. Check GEMINI_MODEL in Server/.env."
+        elif "timeout" in error_lower or "timed out" in error_lower:
+            status_code = 504
+            detail = "Gemini did not respond within 60 seconds. Check the connection and retry."
+        else:
+            status_code = 502
+            detail = f"Gemini summary request failed: {error_text[:500]}"
+
+        raise HTTPException(status_code=status_code, detail=detail) from exc
