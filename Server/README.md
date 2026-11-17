@@ -114,14 +114,28 @@ By default, the script writes JSON, per-class CSV, and per-query CSV files to `d
 
 ## Configure optional OpenAI summaries
 
-Set these variables before starting FastAPI:
+The backend loads `Server/.env` automatically. Create the local file from the example:
 
 ```cmd
-set OPENAI_API_KEY=your-api-key
-set OPENAI_MODEL=your-enabled-model
+copy Server\.env.example Server\.env
 ```
 
-If they are absent, `/summarize` returns a local evidence summary containing the model outputs and short retrieved report excerpts. Neither type of summary diagnoses the uploaded image.
+Open `Server/.env` and set:
+
+```dotenv
+OPENAI_API_KEY=your-secret-api-key
+OPENAI_MODEL=gpt-5.6-luna
+```
+
+Keep the key in this backend-only file. It is covered by the repository's `.gitignore`; never place it in `Client/.env`, frontend source, screenshots, or commits. Environment variables already set in the shell take precedence over values in `Server/.env`.
+
+Install the backend dependencies after pulling these changes:
+
+```cmd
+pip install -r Server\requirements.txt
+```
+
+Restart FastAPI after editing the environment file. The `/health` endpoint reports whether both LLM variables are configured, and `/summarize` uses the OpenAI Responses API when configured. Without them, the endpoint falls back to a labelled local evidence summary. Neither summary diagnoses the uploaded image.
 
 ## Dataset and local data handling
 
