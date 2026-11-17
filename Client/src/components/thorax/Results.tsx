@@ -16,7 +16,7 @@ export function Results({ caseId }: { caseId: string }) {
   const analysis = item;
   function downloadReport() {
     const scores = analysis.predictions ?? [];
-    const text = `RadSyn — Research Analysis Report\n${analysis.id}\n${new Date(analysis.date).toISOString()}\n\nMODEL OUTPUTS (PROBABILITIES; NOT A DIAGNOSIS)\n${scores.map((p) => `${p.disease}: ${p.probability.toFixed(2)}%`).join('\n')}\n\n\n${disclaimer}`;
+    const text = `RadSync — Research Analysis Report\n${analysis.id}\n${new Date(analysis.date).toISOString()}\n\nMODEL OUTPUTS (PROBABILITIES; NOT A DIAGNOSIS)\n${scores.map((p) => `${p.disease}: ${p.probability.toFixed(2)}%`).join('\n')}\n\n\n${disclaimer}`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = `${analysis.id}-research-report.txt`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
