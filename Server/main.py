@@ -1,6 +1,9 @@
 import json
 import os
 from io import BytesIO
+from pathlib import Path
+
+from dotenv import load_dotenv
 from typing import Any
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
@@ -11,6 +14,9 @@ from pydantic import AliasChoices, BaseModel, Field
 
 from Server.services.predictor import CLASSES, DEVICE, explain_image, predict_image
 from Server.services.retrieval import get_dataset_label, get_index_path, retrieve_similar_cases
+
+# Load local secrets from Server/.env; explicit process environment values take precedence.
+load_dotenv(Path(__file__).resolve().with_name(".env"), override=False)
 
 app = FastAPI(
     title="RadSync API",
