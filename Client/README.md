@@ -1,35 +1,33 @@
-# RadSyn Client
+# RadSync Client
 
-## Run locally
+## Run locally (Windows CMD)
 
 1. From the repository root, start the FastAPI backend as described in `Server/README.md`.
-2. In another terminal:
+2. In a second terminal:
 
-   ```powershell
+   ```cmd
    cd Client
    bun install
-   Copy-Item .env.example .env.local
    bun run dev
    ```
 
-Set `VITE_API_BASE_URL` in `.env.local` if the API is not at `http://127.0.0.1:8000`.
+Set `VITE_API_BASE_URL` in `.env.local` when the API is not at `http://127.0.0.1:8000`.
 
-## Implemented integration
+## Backend integration
 
-- `POST /predict`: real DenseNet121 inference for five diseases.
+- `POST /predict`: DenseNet121 inference for five thoracic findings.
 - `POST /gradcam`: computed, class-specific Grad-CAM overlay.
-- `POST /retrieve`: uncertainty-triggered historical case retrieval from the configured MIMIC-CXR SQLite index.
-- `POST /summarize`: optional grounded, non-diagnostic summary of the retrieved report excerpts.
+- `POST /retrieve`: uncertainty-triggered historical retrieval from the configured local SQLite index (Indiana University / Open-i by default).
+- `POST /summarize`: local evidence summary by default; optional OpenAI-powered report summary when configured.
 
-Historical cases only appear after the authorized MIMIC-CXR dataset has been indexed. LLM summaries additionally require the backend `OPENAI_API_KEY` and `OPENAI_MODEL` variables.
+The IU image/report collection must be obtained and indexed locally before historical cases appear. The frontend handles unavailable indexes and untriggered retrieval. Historical reports are contextual references, not labels for the current image.
 
 ## Checks
 
-```powershell
-bun run lint
+```cmd
 bunx tsc --noEmit
 bun run build
-bun test
+bun run test
 ```
 
-Uploaded case data currently lives in browser React state and is lost on page refresh. Persistent case history and authentication are not part of this integration.
+Uploaded case data currently lives in browser React state and is lost on page refresh. Persistent user accounts and server-side case history are not part of this prototype.
