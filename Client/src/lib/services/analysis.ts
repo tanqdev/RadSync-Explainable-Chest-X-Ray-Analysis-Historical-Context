@@ -58,7 +58,7 @@ async function postImage(endpoint: string, file: File, extra?: Record<string, st
   try {
     response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', body: formData });
   } catch {
-    throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}. Start FastAPI and check VITE_API_BASE_URL.`);
+    throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}. Start FastAPI and check VITE_API_BASE_URL.`);
   }
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
@@ -138,7 +138,7 @@ export const analysisService = {
         body: JSON.stringify(payload),
       });
     } catch {
-      throw new Error(`Cannot reach the RadSyn API at ${API_BASE_URL}.`);
+      throw new Error(`Cannot reach the RadSync API at ${API_BASE_URL}.`);
     }
     const body = await response.json().catch(() => null);
     if (!response.ok) {
