@@ -100,6 +100,36 @@ const pipeline = [
   },
 ];
 
+function RetrievalFlowchart() {
+  return (
+    <article className="hc-panel">
+      <div className="hc-panel-head">
+        <div>
+          <div className="hc-kicker"><GitBranch size={13} /> Retrieval logic</div>
+          <h3>How RadSync finds historical context</h3>
+          <p>Follow the path from the uploaded image to the ranked reference reports.</p>
+        </div>
+      </div>
+      <div className="hc-pipeline" aria-label="Historical retrieval flowchart">
+        {pipeline.map((step) => (
+          <div className="hc-flow-step" key={step.number}>
+            <div className="hc-flow-top">
+              <span className="hc-flow-number">{step.number} / {step.label}</span>
+              <span className="hc-flow-icon">{step.icon}</span>
+            </div>
+            <h4>{step.title}</h4>
+            <p>{step.detail}</p>
+          </div>
+        ))}
+      </div>
+      <div className="hc-flow-foot">
+        <strong>Ranking formula:</strong> 65% label-vector similarity + 35% Grad-CAM region-descriptor similarity.
+        The combined value is used to order candidate references; it is not a calibrated clinical probability.
+      </div>
+    </article>
+  );
+}
+
 export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
   const [retrieval, setRetrieval] = useState<RetrievalResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,14 +193,23 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
       )}
 
       {!loading && !error && retrieval && !retrieval.triggered && (
-        <EmptyState title="Historical retrieval was not triggered" description={retrieval.reason} />
+        <div className="hc-workspace">
+          <div className="hc-evidence-boundary">
+            <ShieldAlert size={15} />
+            <span><strong>Retrieval not triggered:</strong> {retrieval.reason} The flow below shows where the uncertainty gate sits in the pipeline; no historical records were ranked for this image.</span>
+          </div>
+          <RetrievalFlowchart />
+        </div>
       )}
 
       {!loading && !error && retrieval?.triggered && retrieval.cases.length === 0 && (
-        <EmptyState
-          title="No similar historical studies found"
-          description={`Retrieval was triggered for ${retrieval.retrieval_class || 'the selected class'}, but the configured index returned no matching studies.`}
-        />
+        <div className="hc-workspace">
+          <EmptyState
+            title="No similar historical studies found"
+            description={`Retrieval was triggered for ${retrieval.retrieval_class || 'the selected class'}, but the configured index returned no matching studies.`}
+          />
+          <RetrievalFlowchart />
+        </div>
       )}
 
       {!loading && !error && retrieval?.triggered && retrieval.cases.length > 0 && (
@@ -236,31 +275,7 @@ export function HistoricalCases({ image, predictions }: HistoricalCasesProps) {
             </article>
           </div>
 
-          <article className="hc-panel">
-            <div className="hc-panel-head">
-              <div>
-                <div className="hc-kicker"><GitBranch size={13} /> Retrieval logic</div>
-                <h3>How RadSync finds historical context</h3>
-                <p>Follow the path from the uploaded image to the ranked reference reports.</p>
-              </div>
-            </div>
-            <div className="hc-pipeline" aria-label="Historical retrieval flowchart">
-              {pipeline.map((step) => (
-                <div className="hc-flow-step" key={step.number}>
-                  <div className="hc-flow-top">
-                    <span className="hc-flow-number">{step.number} / {step.label}</span>
-                    <span className="hc-flow-icon">{step.icon}</span>
-                  </div>
-                  <h4>{step.title}</h4>
-                  <p>{step.detail}</p>
-                </div>
-              ))}
-            </div>
-            <div className="hc-flow-foot">
-              <strong>Ranking formula:</strong> 65% label-vector similarity + 35% Grad-CAM region-descriptor similarity.
-              The combined value is used to order candidate references; it is not a calibrated clinical probability.
-            </div>
-          </article>
+          <RetrievalFlowchart />
 
           <div className="hc-cases-heading">
             <div>
