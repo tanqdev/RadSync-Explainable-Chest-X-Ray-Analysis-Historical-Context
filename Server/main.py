@@ -2,9 +2,9 @@ import json
 import os
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
-from typing import Any
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
