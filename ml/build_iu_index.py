@@ -61,7 +61,7 @@ def format_report(row: dict[str, str], uid: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build/resume the RadSyn Indiana University retrieval index."
+        description="Build/resume the RadSync Indiana University retrieval index."
     )
     parser.add_argument(
         "--reports-csv",
